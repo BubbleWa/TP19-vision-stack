@@ -1,0 +1,415 @@
+# app/main.py
+# Main FastAPI application for ScamBot Backend.
+# Provides metadata, statistics, and detection endpoints,
+# along with CORS and health checks.
+
+from app.config import APP_NAME, APP_VERSION
+from app.services.db import get_conn
+from app.routes.detect import router as detect_router
+from app.routes.meta import router as meta_router
+from typing import Optional, List, Any, Tuple
+from fastapi import FastAPI, Query
+from fastapi.middleware.cors import CORSMiddleware
+import re
+
+app = FastAPI(title=APP_NAME, version=APP_VERSION)
+
+# Register routers
+app.include_router(meta_router)
+
+# -------------------------------------------------
+# Normalisation helpers for query parameters
+# -------------------------------------------------
+def _none_if_all(x: Optional[str]) -> Optional[str]:
+    """Map common 'All' values to None (meaning no filter)."""
+    if x is None:
+        return None
+    v = str(x).strip()
+    if not v or v.lower() in {"all", "any", "na", "n/a"}:
+        return None
+    return v
+
+def _norm_key(s: str) -> str:
+    """Normalise text: lowercase, replace '&', and remove punctuation."""
+    s = s.lower().replace("&", "and")
+    s = re.sub(r"[^a-z0-9]+", " ", s)
+    return re.sub(r"\s+", " ", s).strip()
+
+# Canonical scam_type values (from DB)
+_CANON_SCAM_TYPES = {
+    "phishing": "Phishing",
+    "identity theft": "Identity theft",
+    "hacking": "Hacking",
+    "remote access scams": "Remote access scams",
+    "overpayment scams": "Overpayment scams",
+    "mobile premium services": "Mobile premium services",
+    "health and medical products": "Health and medical products",
+    "classified scams": "Classified scams",
+    "online shopping scams": "Online shopping scams",
+    "false billing": "False billing",
+    "threats to life arrest or other": "Threats to life, arrest or other",
+    "investment scams": "Investment scams",
+    "dating and romance scams": "Dating and romance scams",
+    "fake charity scams": "Fake charity scams",
+    "unexpected prize and lottery scams": "Unexpected prize & lottery scams",
+    "rebate scams": "Rebate scams",
+    "jobs and employment scams": "Jobs and employment scams",
+    "travel prize scams": "Travel prize scams",
+    "ransomware and malware": "Ransomware and malware",
+    "inheritance and unexpected money": "inheritance and unexpected money",
+    "other scams": "Other scams",
+    "psychic and clairvoyant": "Psychic and clairvoyant",
+    "betting and sports investment scams": "Betting and sports investment scams",
+    "pyramid schemes": "Pyramid schemes",
+    "scratchie scams": "Scratchie scams",
+    "travel prizes and lottery scams": "Travel, prizes and lottery scams",
+    "inheritance scams": "Inheritance scams",
+}
+
+# Aliases to canonical scam_type values
+_SCAM_TYPE_ALIASES = {
+    "unexpected prize & lottery scams": "Unexpected prize & lottery scams",
+    "unexpected prize and lottery": "Unexpected prize & lottery scams",
+    "travel prizes and lottery": "Travel, prizes and lottery scams",
+    "travel prize": "Travel prize scams",
+    "jobs and employment": "Jobs and employment scams",
+    "betting & sports investment scams": "Betting and sports investment scams",
+    "inheritance and unexpected": "inheritance and unexpected money",
+}
+
+def _map_scam_type(ui_value: Optional[str]) -> Optional[str]:
+    """Normalise scam_type input to canonical DB value if possible."""
+    v = _none_if_all(ui_value)
+    if v is None:
+        return None
+    k = _norm_key(v)
+    if k in _CANON_SCAM_TYPES:
+        return _CANON_SCAM_TYPES[k]
+    if k in _SCAM_TYPE_ALIASES:
+        return _SCAM_TYPE_ALIASES[k]
+    return v
+
+# State mapping (short codes to full names)
+STATE_MAP = {
+    "ACT": "Australian Capital Territory",
+    "NSW": "New South Wales",
+    "NT": "Northern Territory",
+    "QLD": "Queensland",
+    "SA": "South Australia",
+    "TAS": "Tasmania",
+    "VIC": "Victoria",
+    "WA": "Western Australia",
+}
+
+def _map_state(ui_value: Optional[str]) -> Optional[str]:
+    v = _none_if_all(ui_value)
+    if v is None:
+        return None
+    return STATE_MAP.get(v.upper(), v)
+
+def _map_category(ui_value: Optional[str]) -> Optional[str]:
+    return _none_if_all(ui_value)
+
+def _map_contact_method(ui_value: Optional[str]) -> Optional[str]:
+    return _none_if_all(ui_value)
+
+def _map_age_group(ui_value: Optional[str]) -> Optional[str]:
+    return _none_if_all(ui_value)
+
+def _map_gender(ui_value: Optional[str]) -> Optional[str]:
+    return _none_if_all(ui_value)
+
+# -------------------------------------------------
+# Query helpers
+# -------------------------------------------------
+def _get_year_bounds(conn) -> Tuple[int, List[int]]:
+    """Return maximum year and list of last 5 years."""
+    with conn.cursor() as cur:
+        cur.execute("SELECT COALESCE(MAX(year), 0) FROM scam_stats;")
+        row = cur.fetchone()
+        max_year = int(row[0] or 0)
+    if max_year == 0:
+        return 0, []
+    last5 = [y for y in range(max_year, max_year - 5, -1)]
+    return max_year, last5
+
+def _make_where(base: List[str], params: List[Any], *,
+                years: Optional[List[int]] = None,
+                year: Optional[int] = None,
+                state: Optional[str] = None,
+                category: Optional[str] = None,
+                scam_type: Optional[str] = None,
+                contact_method: Optional[str] = None,
+                age_group: Optional[str] = None,
+                gender: Optional[str] = None):
+    """Build WHERE clauses and parameter list for queries."""
+    if year is not None:
+        base.append("year = %s"); params.append(year)
+    elif years:
+        placeholders = ",".join(["%s"] * len(years))
+        base.append(f"year IN ({placeholders})"); params.extend(years)
+
+    if state:
+        base.append("state = %s"); params.append(state)
+    if category:
+        base.append("category = %s"); params.append(category)
+    if scam_type:
+        base.append("scam_type = %s"); params.append(scam_type)
+    if contact_method:
+        base.append("contact_method = %s"); params.append(contact_method)
+    if age_group:
+        base.append("age_group = %s"); params.append(age_group)
+    if gender:
+        base.append("gender = %s"); params.append(gender)
+
+# -------------------------------------------------
+# /stats endpoint
+# -------------------------------------------------
+@app.get("/stats")
+def stats(
+    year: Optional[int] = Query(None),
+    state: Optional[str] = Query(None),
+    category: Optional[str] = Query(None),
+    scam_type: Optional[str] = Query(None),
+    contact_method: Optional[str] = Query(None),
+    age_group: Optional[str] = Query(None),
+    gender: Optional[str] = Query(None),
+):
+    """
+    Provide statistics for the dashboard.
+    - If year is omitted → aggregate over last 5 years.
+    - If year is provided → filter for that year only.
+    - Top 3 scams always locked to 2025 (fallback to max year).
+    - Breaking news always uses last 5 years, ignores scam_type.
+    - Additional tile: loss per minute (Jan–Apr 2025).
+    """
+    with get_conn() as conn:
+        # Normalise incoming filters
+        norm_state          = _map_state(state)
+        norm_category       = _map_category(category)
+        norm_scam_type      = _map_scam_type(scam_type)
+        norm_contact_method = _map_contact_method(contact_method)
+        norm_age_group      = _map_age_group(age_group)
+        norm_gender         = _map_gender(gender)
+
+        max_year, last5 = _get_year_bounds(conn)
+
+        # ---------------- KPI + SERIES + BREAKDOWN ----------------
+        where = ["1=1"]; params: List[Any] = []
+        _make_where(
+            where, params,
+            years=None if year is not None else last5,  # default window
+            year=year,
+            state=norm_state,
+            category=norm_category,
+            scam_type=norm_scam_type,
+            contact_method=norm_contact_method,
+            age_group=norm_age_group,
+            gender=norm_gender,
+        )
+        where_sql = " AND ".join(where)
+
+        kpi_sql = f"""
+          SELECT
+            COALESCE(SUM(reports), 0)                       AS reports,
+            COALESCE(SUM(losses), 0)::float                 AS losses,
+            COALESCE(SUM(CASE WHEN losses IS NOT NULL AND losses > 0
+                               THEN reports ELSE 0 END), 0) AS reports_with_loss
+          FROM scam_stats
+          WHERE {where_sql};
+        """
+        series_sql = f"""
+          SELECT year, month, SUM(reports) AS reports, SUM(losses)::float AS losses
+          FROM scam_stats
+          WHERE {where_sql}
+          GROUP BY year, month
+          ORDER BY year, month;
+        """
+        breakdown_sql = f"""
+          SELECT category, SUM(reports) AS reports, SUM(losses)::float AS losses
+          FROM scam_stats
+          WHERE {where_sql}
+          GROUP BY category
+          ORDER BY losses DESC NULLS LAST, reports DESC NULLS LAST
+          LIMIT 20;
+        """
+
+        with conn.cursor() as cur:
+            cur.execute(kpi_sql, params)
+            r_reports, r_losses, r_reports_with_loss = cur.fetchone()
+            total_reports = int(r_reports or 0)
+            total_losses  = float(r_losses or 0.0)
+            total_reports_with_loss = int(r_reports_with_loss or 0)
+
+            cur.execute(series_sql, params)
+            rows = cur.fetchall()
+            series = [
+                {"period": f"{int(y)}-{int(m):02d}",
+                 "reports": int(rep or 0),
+                 "losses": float(loss or 0.0)}
+                for (y, m, rep, loss) in rows
+            ]
+
+            cur.execute(breakdown_sql, params)
+            breakdown = [
+                {"category": c or "Unknown",
+                 "reports": int(rep or 0),
+                 "losses": float(loss or 0.0)}
+                for (c, rep, loss) in cur.fetchall()
+            ]
+
+        # ---------------- Likelihood tiles ----------------
+        likelihood_loss_per_10 = (
+            round((total_reports_with_loss / total_reports) * 10.0, 2)
+            if total_reports > 0 else 0.0
+        )
+
+        # ---------------- Top 3 scams by loss ----------------
+        top3_year = 2025 if (max_year and 2025 <= max_year) else max_year
+        top3_params: List[Any] = [top3_year]
+        top3_where = ["year = %s"]
+        if norm_state:
+            top3_where.append("state = %s"); top3_params.append(norm_state)
+        top3_sql = f"""
+          SELECT category, scam_type, contact_method,
+                 SUM(losses)::float AS losses, SUM(reports) AS reports
+          FROM scam_stats
+          WHERE {" AND ".join(top3_where)}
+          GROUP BY category, scam_type, contact_method
+          ORDER BY losses DESC NULLS LAST, reports DESC NULLS LAST
+          LIMIT 3;
+        """
+        with get_conn() as conn2, conn2.cursor() as cur2:
+            cur2.execute(top3_sql, top3_params)
+            top3 = [
+                {
+                    "category": c or "Unknown",
+                    "scam_type": st or "Unknown",
+                    "contact_method": cm or "Unknown",
+                    "losses": float(ls or 0.0),
+                    "reports": int(rp or 0),
+                    "year": top3_year,
+                }
+                for (c, st, cm, ls, rp) in cur2.fetchall()
+            ]
+
+        # ---------------- Breaking news ----------------
+        bn_params: List[Any] = []
+        bn_where = ["1=1"]
+        if last5:
+            placeholders = ",".join(["%s"] * len(last5))
+            bn_where.append(f"year IN ({placeholders})"); bn_params.extend(last5)
+        if norm_state:
+            bn_where.append("state = %s"); bn_params.append(norm_state)
+
+        bn_sql = f"""
+          WITH by_year AS (
+            SELECT contact_method, year, SUM(losses)::float AS losses
+            FROM scam_stats
+            WHERE {" AND ".join(bn_where)}
+            GROUP BY contact_method, year
+          ),
+          span AS (
+            SELECT
+              contact_method,
+              MIN(year) AS y0,
+              MAX(year) AS y1
+            FROM by_year
+            GROUP BY contact_method
+          ),
+          joined AS (
+            SELECT
+              s.contact_method,
+              b0.losses AS losses_start,
+              b1.losses AS losses_end
+            FROM span s
+            LEFT JOIN by_year b0 ON b0.contact_method = s.contact_method AND b0.year = s.y0
+            LEFT JOIN by_year b1 ON b1.contact_method = s.contact_method AND b1.year = s.y1
+          )
+          SELECT contact_method,
+                 COALESCE(
+                   CASE WHEN losses_start IS NULL OR losses_start = 0 THEN NULL
+                        ELSE (losses_end - losses_start) / losses_start * 100.0
+                   END, 0.0
+                 ) AS pct_change,
+                 COALESCE(losses_start,0.0) AS losses_start,
+                 COALESCE(losses_end,0.0)   AS losses_end
+          FROM joined
+          ORDER BY pct_change DESC NULLS LAST
+          LIMIT 3;
+        """
+        with get_conn() as conn3, conn3.cursor() as cur3:
+            cur3.execute(bn_sql, bn_params)
+            breaking_news = [
+                {
+                    "contact_method": cm or "Unknown",
+                    "pct_change": round(float(pct or 0.0), 2),
+                    "losses_start": float(ls0 or 0.0),
+                    "losses_end": float(ls1 or 0.0),
+                    "window_years": last5,
+                }
+                for (cm, pct, ls0, ls1) in cur3.fetchall()
+            ]
+
+        # ---------------- Loss per minute (2025 Jan–Apr) ----------------
+        rate_year = 2025
+        rate_month_start, rate_month_end = 1, 4
+        rate_where = ["year = %s", "month BETWEEN %s AND %s"]
+        rate_params: List[Any] = [rate_year, rate_month_start, rate_month_end]
+        if norm_state:
+            rate_where.append("state = %s")
+            rate_params.append(norm_state)
+        rate_sql = f"""
+          SELECT COALESCE(SUM(losses), 0)::float
+          FROM scam_stats
+          WHERE {" AND ".join(rate_where)};
+        """
+        with get_conn() as conn_r, conn_r.cursor() as cur_r:
+            cur_r.execute(rate_sql, rate_params)
+            total_loss_2025_4mo = float(cur_r.fetchone()[0] or 0.0)
+
+        minutes_in_window = 120 * 24 * 60  # Jan–Apr 2025 = 120 days
+        loss_per_minute_2025_4mo = (
+            round(total_loss_2025_4mo / minutes_in_window, 2) if minutes_in_window > 0 else 0.0
+        )
+
+    # Final JSON response
+    return {
+        "kpis": {
+            "total_losses": round(total_losses, 2),
+            "reports": total_reports,
+            "avg_loss": round((total_losses / total_reports), 2) if total_reports else 0.0
+        },
+        "series": series,
+        "breakdown": breakdown,
+        "likelihood": {
+            "likelihood_loss_per_10": likelihood_loss_per_10
+        },
+        "top3_by_loss": top3,
+        "breaking_news": breaking_news,
+        "loss_per_minute_2025_4mo": {
+            "year": 2025,
+            "months": [1, 2, 3, 4],
+            "state_applied": norm_state or None,
+            "total_loss_window": round(total_loss_2025_4mo, 2),
+            "minutes_in_window": minutes_in_window,
+            "rate_per_minute": loss_per_minute_2025_4mo
+        }
+    }
+
+# Register ScamBot detect router
+app.include_router(detect_router)
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/healthz")
+def healthz():
+    """Health check endpoint."""
+    return {"ok": True, "service": APP_NAME, "version": APP_VERSION}
