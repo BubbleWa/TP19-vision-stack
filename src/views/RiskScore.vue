@@ -1,6 +1,6 @@
 <template>
   <div class="risk-page">
-    <!-- 页面标题 -->
+    <!-- Page title -->
     <section class="risk-header">
       <h2>Risk Score Measure</h2>
       <p>
@@ -9,7 +9,7 @@
       </p>
     </section>
 
-    <!-- 风险仪表盘卡片 -->
+    <!-- Risk meter card -->
     <section class="risk-card">
       <img src="/risk-meter.png" alt="Risk Meter" class="risk-image" />
       <div class="risk-info">
@@ -22,21 +22,21 @@
 </template>
 
 <script setup>
-// 未来这里会接 API
+// API integration will be added later
 </script>
 
 <style scoped>
-/* 页面背景 */
+/* Page background */
 .risk-page {
-  background: #f3e8ff;   /* 淡紫色背景 */
+  background: #f3e8ff;   /* Light purple background */
   min-height: 100vh;
-  padding: 100px 20px 20px; /* 上面留 100px 避免挡住导航栏 */
+  padding: 100px 20px 20px; /* Top 100px to avoid overlapping the navbar */
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-/* ===== 标题部分 ===== */
+/* ===== Title section ===== */
 .risk-header {
   text-align: center;
   margin-bottom: 40px;
@@ -56,7 +56,7 @@
   line-height: 1.8;
 }
 
-/* ===== 风险卡片 ===== */
+/* ===== Risk card ===== */
 .risk-card {
   display: flex;
   flex-direction: column;
@@ -99,7 +99,7 @@
   transform: translateY(-2px);
 }
 
-/* ===== 自适应布局 (大屏幕左右排) ===== */
+/* ===== Responsive layout (side-by-side on large screens) ===== */
 @media (min-width: 768px) {
   .risk-card {
     flex-direction: row;

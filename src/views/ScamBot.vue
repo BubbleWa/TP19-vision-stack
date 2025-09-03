@@ -28,8 +28,48 @@
         <!-- Actions -->
         <div class="doc-actions">
           <label class="btn light" for="fileInput">Upload screenshot</label>
-          <input id="fileInput" type="file" class="hidden" accept="image/*,text/plain" @change="handleFile">
-          <button class="btn primary" @click="analyze">Detect</button>
+          <input
+            id="fileInput"
+            type="file"
+            class="hidden"
+            accept="image/*,text/plain"
+            @change="handleFile"
+          >
+          <button class="btn primary" @click="analyze" :disabled="loading">
+            {{ loading ? "Checking..." : "Detect" }}
+          </button>
+        </div>
+
+        <!-- Result -->
+        <div v-if="error" class="result text-red-600">
+          {{ error }}
+        </div>
+
+        <div v-if="result" class="result">
+          <p><strong>Verdict:</strong> {{ result.verdict }}</p>
+          <p><strong>ML Score:</strong> {{ (result.score_ml ?? 0).toFixed(3) }}</p>
+          <p><strong>Rules Score:</strong> {{ result.score_rules ?? 0 }}</p>
+          <p><strong>Confidence:</strong> {{ Math.round((result.score_ml ?? 0) * 100) }}%</p>
+
+          <div v-if="result.reasons?.length">
+            <p><strong>Reasons:</strong></p>
+            <ul class="list-disc pl-5">
+              <li v-for="(r, i) in result.reasons" :key="i">{{ r }}</li>
+            </ul>
+          </div>
+
+          <div v-if="result.highlights?.length">
+            <p><strong>Flags:</strong></p>
+            <div class="flex flex-wrap gap-2">
+              <span
+                v-for="(h, i) in result.highlights"
+                :key="i"
+                class="px-2 py-1 rounded text-xs bg-indigo-100 text-indigo-700"
+              >
+                {{ h.type }}
+              </span>
+            </div>
+          </div>
         </div>
       </section>
     </div>
@@ -38,16 +78,32 @@
 
 <script setup>
 import { ref } from "vue"
+import { detectScam } from "@/services/scambot" // ✅ 新增：调用封装的 API
 
-const userInput = ref("") // User input text
-const score = ref(0)      // Risk score (0–100)
+const userInput = ref("")     // User input text
+const loading = ref(false)    // Loading state
+const error = ref("")         // Error message
+const result = ref(null)      // Backend result
 
-// Simple analyze function
-function analyze() {
-  const text = userInput.value.toLowerCase()
-  let s = 0
-  if (/urgent|password|bank|link|click/.test(text)) s += 20
-  score.value = Math.min(100, s)
+/**
+ * Analyze function:
+ * - Call backend API via detectScam
+ * - Show error if fails
+ */
+async function analyze() {
+  error.value = ""
+  result.value = null
+
+  if (!userInput.value.trim()) return
+
+  loading.value = true
+  try {
+    result.value = await detectScam(userInput.value.trim())
+  } catch (e) {
+    error.value = e.message || "Something went wrong."
+  } finally {
+    loading.value = false
+  }
 }
 
 // Paste text from clipboard
@@ -160,4 +216,14 @@ function handleFile(e) {
 .btn.primary:hover { filter: brightness(1.05); }
 .btn.light { background: #f3f4f6; color: #374151; }
 .btn.ghost { background: #e9d5ff; color: #5b21b6; }
+
+/* Result */
+.result {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f9fafb;
+  color: #111827;
+  font-weight: 600;
+}
 </style>

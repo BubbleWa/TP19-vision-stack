@@ -6,7 +6,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const selectedLang = ref('en')
 
-// 跳转到 ScamBot 页面
+// Navigate to ScamBot page
 const goToScamBot = () => {
   router.push('/scambot')
 }
@@ -14,19 +14,19 @@ const goToScamBot = () => {
 
 <template>
   <div class="app-wrapper">
-    <!-- 导航栏 -->
+    <!-- Navigation bar -->
     <NavBar />
 
-    <!-- 页面路由内容 -->
+    <!-- Page route content -->
     <router-view />
 
-    <!-- ScamBot 浮窗 -->
+    <!-- ScamBot floating button -->
     <div class="scambot-floating" @click="goToScamBot">
       <img src="/bot.png" alt="ScamBot" />
       <span>ScamBot</span>
     </div>
 
-    <!-- 左下角语言切换器浮窗 -->
+    <!-- Bottom-left language switcher -->
     <div class="language-switcher">
       <select v-model="selectedLang">
         <option value="en">English</option>
@@ -46,7 +46,7 @@ const goToScamBot = () => {
   min-height: 100vh;
 }
 
-/* ScamBot 浮窗 */
+/* ScamBot floating button */
 .scambot-floating {
   position: fixed;
   bottom: 20px;
@@ -72,7 +72,7 @@ const goToScamBot = () => {
   transform: translateY(-3px);
 }
 
-/* 语言切换浮窗 */
+/* Language switcher floating box */
 .language-switcher {
   position: fixed;
   bottom: 20px;

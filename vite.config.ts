@@ -4,11 +4,8 @@ import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 
 export default defineConfig({
-  base: '/TP19/', // GitHub Pages 路径
-  plugins: [
-    vue(),
-    vueDevTools()
-  ],
+  plugins: [vue()],
+  base: '/', 
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))

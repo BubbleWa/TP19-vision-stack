@@ -48,14 +48,29 @@
           <p class="kpi-number">{{ kpiReportedScams.toLocaleString() }}</p>
         </div>
 
-        <!-- Likelihood (REPLACED donut with live counter) -->
-        <div class="likelihood-card">
-          <h3>💸 Real-time Scam Losses</h3>
-          <p class="kpi-number">{{ counterDisplay }}</p>
-          <p style="opacity:.85; margin-top:8px;">
-            Updating at ~${{ ratePerMinute.toLocaleString() }} per minute
-          </p>
+      <!-- Likelihood -->
+      <div class="likelihood-card">
+        <!-- Removed Doughnut chart -->
+        
+        <div class="people-row">
+          <span
+            v-for="n in 10"
+            :key="n"
+            class="person"
+            :class="{ active: n <= peopleOutOf10 }"
+          >👤</span>
         </div>
+        <p>{{ peopleOutOf10 }} out of 10 faced financial loss</p>
+      </div>
+
+      <!-- Likelihood -->
+      <div class="likelihood-card">
+        <h3>💸 Real-time Scam Losses</h3>
+        <p class="kpi-number">{{ counterDisplay }}</p>
+        <p style="opacity:.85; margin-top:8px;">
+          Updating at ~${{ ratePerMinute.toLocaleString() }} per minute
+        </p>
+      </div>
 
         <!-- Top scams -->
         <div class="top-scams-card">
@@ -221,40 +236,47 @@ onUnmounted(() => {
 <style scoped>
 .dashboard-page {
   min-height: 100vh;
-  background: linear-gradient(to bottom right, #1e3a8a, #0f172a);
+  background: linear-gradient(to bottom right, #f3e8ff, #ede9fe);
   padding: 24px 12px;
   color: white;
   font-family: "Segoe UI", sans-serif;
+
+  font-size: 1.1rem; /* NEW: make all text slightly bigger */
 }
+
 .wrap {
   max-width: 1240px;
   margin: 0 auto;
 }
 
-/* State buttons */
-.state-selector {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 20px;
-  justify-content: center;
-}
 .state-btn {
-  padding: 10px 16px;
-  border-radius: 20px;
-  background: #3b82f6;
-  color: #fff;
+  padding: 14px 22px;             /* bigger size */
+  border-radius: 24px;            /* more rounded */
+  font-size: 1.1rem;              /* bigger text */
   font-weight: bold;
   border: none;
   cursor: pointer;
-  transition: background 0.2s;
+
+  /* gradient background */
+  background: linear-gradient(135deg, #60a5fa, #3b82f6); 
+  color: #fff;
+
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s, background 0.3s;
 }
+
+/* hover effect */
 .state-btn:hover {
-  background: #2563eb;
+  background: linear-gradient(135deg, #93c5fd, #2563eb);
+  transform: scale(1.05);        /* small zoom on hover */
 }
+
+/* active (selected) */
 .state-btn.active {
-  background: #1e40af;
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  transform: scale(1.08);
 }
+
 
 /* Breaking news */
 .breaking-row {
@@ -266,9 +288,10 @@ onUnmounted(() => {
 }
 .breaking-row span {
   background: #ef4444;
-  padding: 6px 12px;
+  padding: 8px 14px; /* slightly bigger for readability */
   border-radius: 6px;
   font-weight: bold;
+  font-size: 1.05rem; /* NEW */
   box-shadow: 0 4px 10px rgba(0,0,0,.2);
 }
 
@@ -280,11 +303,12 @@ onUnmounted(() => {
   margin: 20px 0;
 }
 .filter-select {
-  padding: 8px 14px;
+  padding: 10px 16px; /* bigger */
   border-radius: 8px;
   border: none;
   background: #3b82f6;
   color: white;
+  font-size: 1.05rem; /* NEW */
   font-weight: bold;
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(0,0,0,.2);
@@ -300,27 +324,29 @@ onUnmounted(() => {
   gap: 20px;
 }
 .kpi-card, .likelihood-card, .top-scams-card {
-  background: #1d4ed8;
+  background: #60a5fa; /* lighter blue */
   border-radius: 14px;
-  padding: 20px;
+  padding: 24px; /* slightly bigger padding */
   box-shadow: 0 8px 16px rgba(0,0,0,.25);
   text-align: center;
+  font-size: 1.1rem; /* NEW */
 }
+
 .kpi-card i {
-  font-size: 30px;
-  margin-bottom: 6px;
+  font-size: 34px; /* bigger icon */
+  margin-bottom: 8px;
 }
 .kpi-number {
-  font-size: 1.8rem;
+  font-size: 2.2rem; /* bigger number */
   font-weight: bold;
-  margin-top: 6px;
+  margin-top: 8px;
 }
 .people-row {
   display: flex;
   justify-content: center;
-  gap: 4px;
-  font-size: 20px;
-  margin: 12px 0;
+  gap: 6px;
+  font-size: 22px; /* bigger people icons */
+  margin: 14px 0;
 }
 .person { opacity: 0.3; }
 .person.active { opacity: 1; }
@@ -331,8 +357,10 @@ onUnmounted(() => {
   padding: 0;
   margin: 0;
   text-align: left;
+  font-size: 1.05rem; /* NEW: make list text bigger */
 }
 .top-scams-card li {
-  margin: 12px 0;
+  margin: 14px 0;
 }
 </style>
+

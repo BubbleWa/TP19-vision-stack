@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login</title>
+  <style>
+    /* ===== GLOBAL STYLES ===== */
+    body {
+      margin: 0;
+      height: 100vh; /* full viewport height */
+      display: flex;
+      justify-content: center; /* center horizontally */
+      align-items: center;     /* center vertically */
+      background: #f3e8ff;     /* light purple background */
+      font-family: "Segoe UI", sans-serif;
+    }
+
+    /* ===== LOGIN CONTAINER ===== */
+    .login-container {
+      background: white;
+      padding: 40px;
+      border-radius: 16px; /* rounded corners */
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); /* subtle shadow */
+      text-align: center;
+      width: 320px; /* fixed width for form */
+    }
+
+    .login-container h2 {
+      margin-bottom: 20px;
+      color: #3b1d74; /* dark purple title */
+    }
+
+    /* ===== INPUT FIELD ===== */
+    input[type="password"] {
+      width: 100%;
+      padding: 12px;
+      font-size: 1.1rem;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      outline: none;
+      transition: border 0.3s;
+    }
+    input[type="password"]:focus {
+      border-color: #6366f1; /* highlight border when focused */
+    }
+
+    /* ===== BUTTON ===== */
+    button {
+      width: 100%;
+      padding: 12px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: white;
+      background: #6366f1; /* indigo button */
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+    }
+    button:hover {
+      background: #4f46e5; /* darker indigo on hover */
+      transform: translateY(-2px); /* slight lift effect */
+    }
+  </style>
+</head>
+<body>
+  <!-- Login card -->
+  <div class="login-container">
+    <h2>Enter Password</h2>
+    <!-- Password input field -->
+    <input type="password" id="pw" placeholder="Password" />
+    <!-- Login button -->
+    <button onclick="checkPw()">Login</button>
+  </div>
+
+  <script>
+  // Function to check password input
+  function checkPw() {
+    const pw = document.getElementById("pw").value;
+    if (pw === "TP19gogogo") { // <-- set your password here
+      sessionStorage.setItem("authenticated", "true");
+
+      // redirect back to homepage (support root & GitHub Pages subpath)
+      const url = window.location.origin + window.location.pathname.replace("login.html", "");
+      window.location.href = url;
+    } else {
+      alert("Wrong password!"); // show alert if incorrect
+    }
+  }
+</script>
+
+</body>
+</html>
+

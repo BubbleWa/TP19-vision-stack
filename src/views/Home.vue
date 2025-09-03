@@ -82,13 +82,13 @@
       </div>
     </section>
 
-    <!-- 右下角 ScamBot 浮窗 -->
+    <!-- ScamBot in the right corner -->
     <div class="scambot-floating" @click="goToScamBot">
       <img src="/bot.png" alt="ScamBot" />
       <span>ScamBot</span>
     </div>
 
-    <!-- 左下角语言切换器浮窗 -->
+    <!-- language-switcher -->
     <div class="language-switcher">
       <select v-model="selectedLang">
         <option value="en">English</option>
@@ -106,11 +106,28 @@
 import { ref } from "vue"
 import { useRouter } from "vue-router"
 
+// Update stats content according to new requirements
 const stats = ref([
-  { value: "$3.1B", label: "lost to scams in 2022", color: "#bae6fd" },
-  { value: "47%", label: "victims aged 18–35", color: "#fecdd3" },
-  { value: "47%", label: "aged 15–38", color: "#fecaca" },
-  { value: "Top scams", label: "Phishing · Fake Jobs · Shopping", color: "#fde68a" }
+  { 
+    value: "💡 Did you know?", 
+    label: "Australians lose billions every year to scams, making online awareness more important than ever.", 
+    color: "#bae6fd" 
+  },
+  { 
+    value: "👥 Who’s at risk?", 
+    label: "In 2025, over 7,000 Australians aged 55+ fell victim to scams nationwide.", 
+    color: "#fecdd3" 
+  },
+  { 
+    value: "💰 Reported losses", 
+    label: "Scammers stole more than $8.6 million from older Australians in 2025 alone.", 
+    color: "#fecaca" 
+  },
+  { 
+    value: "⚠️ Top scams to watch", 
+    label: "Investment · Phishing · Romance", 
+    color: "#fde68a" 
+  }
 ])
 
 const selectedLang = ref("en")
@@ -120,6 +137,7 @@ const goToDashboard = () => router.push("/dashboard")
 const goToScamBot = () => router.push("/scambot")
 const goToRiskScore = () => router.push("/riskscore")
 </script>
+
 
 <style scoped>
 .page-wrapper {
@@ -411,4 +429,50 @@ const goToRiskScore = () => router.push("/riskscore")
   color: white;
   font-size: 0.9rem;
 }
+/* ===== UNIFIED BUTTON STYLE ===== */
+button,
+.explore-btn,
+.bot-button,
+.risk-button {
+  display: inline-block;
+  padding: 10px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;       /* rounded corners */
+  cursor: pointer;
+  transition: all 0.3s ease; /* smooth hover */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+/* Explore Dashboard button */
+.explore-btn {
+  background: #6366f1;
+  color: white;
+}
+.explore-btn:hover {
+  background: #4f46e5;
+  transform: translateY(-3px);
+}
+
+/* ScamBot button */
+.bot-button {
+  background: #6366f1;   /* same as hero button for consistency */
+  color: white;
+}
+.bot-button:hover {
+  background: #4f46e5;
+  transform: translateY(-3px);
+}
+
+/* Risk Score button */
+.risk-button {
+  background: #facc15;
+  color: #111;
+}
+.risk-button:hover {
+  background: #eab308;
+  transform: translateY(-3px);
+}
+
 </style>
