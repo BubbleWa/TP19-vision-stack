@@ -240,8 +240,7 @@ onUnmounted(() => {
   padding: 24px 12px;
   color: white;
   font-family: "Segoe UI", sans-serif;
-
-  font-size: 1.1rem; /* NEW: make all text slightly bigger */
+  font-size: 1.1rem; /* make all text slightly bigger */
 }
 
 .wrap {
@@ -249,36 +248,39 @@ onUnmounted(() => {
   margin: 0 auto;
 }
 
+/* ---------- State buttons ---------- */
+.state-selector {
+  display: flex;
+  flex-wrap: wrap;            /* allow wrapping on small screens */
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
 .state-btn {
-  padding: 14px 22px;             /* bigger size */
-  border-radius: 24px;            /* more rounded */
-  font-size: 1.1rem;              /* bigger text */
+  padding: 14px 22px;         
+  border-radius: 24px;        
+  font-size: 1.1rem;          
   font-weight: bold;
   border: none;
   cursor: pointer;
+  min-width: 120px;           /* prevent being too narrow */
+  text-align: center;
 
-  /* gradient background */
   background: linear-gradient(135deg, #60a5fa, #3b82f6); 
   color: #fff;
-
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   transition: transform 0.2s, background 0.3s;
 }
-
-/* hover effect */
 .state-btn:hover {
   background: linear-gradient(135deg, #93c5fd, #2563eb);
-  transform: scale(1.05);        /* small zoom on hover */
+  transform: scale(1.05);        
 }
-
-/* active (selected) */
 .state-btn.active {
   background: linear-gradient(135deg, #2563eb, #1e40af);
   transform: scale(1.08);
 }
 
-
-/* Breaking news */
+/* ---------- Breaking news ---------- */
 .breaking-row {
   display: flex;
   flex-wrap: wrap;
@@ -288,14 +290,14 @@ onUnmounted(() => {
 }
 .breaking-row span {
   background: #ef4444;
-  padding: 8px 14px; /* slightly bigger for readability */
+  padding: 8px 14px;
   border-radius: 6px;
   font-weight: bold;
-  font-size: 1.05rem; /* NEW */
+  font-size: 1.05rem;
   box-shadow: 0 4px 10px rgba(0,0,0,.2);
 }
 
-/* Filter row */
+/* ---------- Filters row ---------- */
 .filter-row {
   display: flex;
   justify-content: center;
@@ -303,12 +305,12 @@ onUnmounted(() => {
   margin: 20px 0;
 }
 .filter-select {
-  padding: 10px 16px; /* bigger */
+  padding: 10px 16px;
   border-radius: 8px;
   border: none;
   background: #3b82f6;
   color: white;
-  font-size: 1.05rem; /* NEW */
+  font-size: 1.05rem;
   font-weight: bold;
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(0,0,0,.2);
@@ -317,27 +319,26 @@ onUnmounted(() => {
   color: black;
 }
 
-/* Dashboard cards */
+/* ---------- Dashboard cards ---------- */
 .dashboard-cards {
   display: grid;
-  grid-template-columns: 1fr 1.3fr 1fr;
+  grid-template-columns: 1fr 1.3fr 1fr; /* default 3-column */
   gap: 20px;
 }
 .kpi-card, .likelihood-card, .top-scams-card {
-  background: #60a5fa; /* lighter blue */
+  background: #60a5fa;
   border-radius: 14px;
-  padding: 24px; /* slightly bigger padding */
+  padding: 24px;
   box-shadow: 0 8px 16px rgba(0,0,0,.25);
   text-align: center;
-  font-size: 1.1rem; /* NEW */
+  font-size: 1.1rem;
 }
-
 .kpi-card i {
-  font-size: 34px; /* bigger icon */
+  font-size: 34px;
   margin-bottom: 8px;
 }
 .kpi-number {
-  font-size: 2.2rem; /* bigger number */
+  font-size: 2.2rem;
   font-weight: bold;
   margin-top: 8px;
 }
@@ -345,22 +346,161 @@ onUnmounted(() => {
   display: flex;
   justify-content: center;
   gap: 6px;
-  font-size: 22px; /* bigger people icons */
+  font-size: 22px;
   margin: 14px 0;
 }
 .person { opacity: 0.3; }
 .person.active { opacity: 1; }
 
-/* Top scams */
+/* ---------- Top scams ---------- */
 .top-scams-card ul {
   list-style: none;
   padding: 0;
   margin: 0;
   text-align: left;
-  font-size: 1.05rem; /* NEW: make list text bigger */
+  font-size: 1.05rem;
 }
 .top-scams-card li {
   margin: 14px 0;
 }
+
+/* ========== Responsive Layout ========== */
+
+/* Reduce padding for wrap on medium screens */
+@media (max-width: 1024px) {
+  .wrap {
+    padding: 0 16px;
+  }
+}
+
+/* Filters stack vertically on tablets/phones */
+@media (max-width: 768px) {
+  .filter-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .filter-select {
+    width: 100%;
+  }
+}
+
+/* Dashboard grid: 2 columns on tablets */
+@media (max-width: 1024px) {
+  .dashboard-cards {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Dashboard grid: 1 column on phones */
+@media (max-width: 640px) {
+  .dashboard-cards {
+    grid-template-columns: 1fr;
+  }
+  .kpi-card, .likelihood-card, .top-scams-card {
+    text-align: center;
+  }
+}
+
+/* Breaking news stack vertically on phones */
+@media (max-width: 640px) {
+  .breaking-row {
+    flex-direction: column;
+    align-items: center;
+  }
+  .breaking-row span {
+    width: 100%;
+    text-align: center;
+  }
+}
+/* Prevent horizontal overflow on small screens */
+@media (max-width: 640px) {
+  .dashboard-cards {
+    grid-template-columns: 1fr;   /* ensure single column */
+  }
+
+  .kpi-card, .likelihood-card, .top-scams-card {
+    width: 100%;                  /* force full width */
+    box-sizing: border-box;       /* include padding */
+    word-wrap: break-word;        /* allow wrapping long text */
+    overflow-wrap: break-word;
+  }
+
+  /* Adjust KPI numbers to shrink on small screens */
+  .kpi-number {
+    font-size: 1.6rem;            /* smaller font for long numbers */
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
+  /* Ensure dropdowns also fit screen width */
+  .filter-select {
+    max-width: 100%;
+  }
+}
+/* ===== Fix card overflow on small screens ===== */
+
+/* 1) Never allow horizontal scrolling on the page */
+html, body, .dashboard-page, .wrap {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* 2) Let grid children shrink inside the grid (very important for mobile) */
+.dashboard-cards > * {
+  min-width: 0;                /* allow shrinking */
+  width: 100%;                 /* take full column width */
+  box-sizing: border-box;      /* include padding in width */
+  overflow-wrap: anywhere;     /* break long strings/numbers if needed */
+  word-break: break-word;
+}
+
+/* 3) Scale big numbers responsively so they don't push the card wider */
+.kpi-number {
+  /* min 1.25rem, prefers 6vw on mobile, caps at your previous 2.2rem */
+  font-size: clamp(1.25rem, 6vw, 2.2rem);
+  line-height: 1.2;
+}
+
+/* 4) Ensure long paragraphs/titles wrap instead of stretching the card */
+.likelihood-card p,
+.top-scams-card h3,
+.top-scams-card li {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* 5) Controls should never exceed viewport width */
+.state-btn,
+.filter-select {
+  max-width: 100%;
+}
+
+/* 6) On phones keep a strict single column and remove any hidden gaps */
+@media (max-width: 640px) {
+  .dashboard-cards {
+    grid-template-columns: 1fr !important;  /* enforce single column */
+    margin-right: 0;
+  }
+}
+/* Fix the "people row" on small screens */
+.people-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;      /* allow wrapping on narrow screens */
+  gap: 4px;
+  font-size: clamp(14px, 4vw, 22px); /* responsive size: min 14px, max 22px */
+  margin: 14px 0;
+}
+
+.person {
+  flex: 0 1 auto;       /* allow shrinking */
+  opacity: 0.3;
+}
+.person.active {
+  opacity: 1;
+}
+
 </style>
+
 

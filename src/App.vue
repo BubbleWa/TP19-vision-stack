@@ -1,10 +1,8 @@
 <script setup>
 import NavBar from './components/NavBar.vue'
-import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const selectedLang = ref('en')
 
 // Navigate to ScamBot page
 const goToScamBot = () => {
@@ -24,18 +22,6 @@ const goToScamBot = () => {
     <div class="scambot-floating" @click="goToScamBot">
       <img src="/bot.png" alt="ScamBot" />
       <span>ScamBot</span>
-    </div>
-
-    <!-- Bottom-left language switcher -->
-    <div class="language-switcher">
-      <select v-model="selectedLang">
-        <option value="en">English</option>
-        <option value="jp">日本語</option>
-        <option value="ar">العربية</option>
-        <option value="zh">中文</option>
-        <option value="es">Español</option>
-        <option value="fr">Français</option>
-      </select>
     </div>
   </div>
 </template>
@@ -70,29 +56,5 @@ const goToScamBot = () => {
 .scambot-floating:hover {
   background: #4c1d95;
   transform: translateY(-3px);
-}
-
-/* Language switcher floating box */
-.language-switcher {
-  position: fixed;
-  bottom: 20px;
-  left: 20px;
-  background: #6d28d9;
-  padding: 8px 12px;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-  z-index: 999;
-}
-.language-switcher select {
-  border: none;
-  background: transparent;
-  color: white;
-  font-size: 1rem;
-  font-weight: 500;
-  outline: none;
-  cursor: pointer;
-}
-.language-switcher select option {
-  color: black;
 }
 </style>

@@ -87,20 +87,9 @@
       <img src="/bot.png" alt="ScamBot" />
       <span>ScamBot</span>
     </div>
-
-    <!-- language-switcher -->
-    <div class="language-switcher">
-      <select v-model="selectedLang">
-        <option value="en">English</option>
-        <option value="jp">日本語</option>
-        <option value="ar">العربية</option>
-        <option value="zh">中文</option>
-        <option value="es">Español</option>
-        <option value="fr">Français</option>
-      </select>
-    </div>
   </div>
 </template>
+
 
 <script setup>
 import { ref } from "vue"
@@ -130,7 +119,7 @@ const stats = ref([
   }
 ])
 
-const selectedLang = ref("en")
+
 
 const router = useRouter()
 const goToDashboard = () => router.push("/dashboard")
@@ -416,19 +405,7 @@ const goToRiskScore = () => router.push("/riskscore")
 .scambot-floating img {
   width: 24px;
 }
-.language-switcher {
-  position: fixed;
-  bottom: 20px;
-  left: 20px;
-  background: #6d28d9;
-  padding: 6px 10px;
-  border-radius: 8px;
-}
-.language-switcher select {
-  background: transparent;
-  color: white;
-  font-size: 0.9rem;
-}
+
 /* ===== UNIFIED BUTTON STYLE ===== */
 button,
 .explore-btn,

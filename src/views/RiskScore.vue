@@ -2,7 +2,7 @@
   <div class="risk-page">
     <!-- Page title -->
     <section class="risk-header">
-      <h2>Risk Score Measure</h2>
+      <h2>Risk Score Measure coming soon.....</h2>
       <p>
         CyberMate’s Risk Score helps you understand your personal exposure.  
         Based on your online activity and scam history, get a score that shows your digital risk level.
