@@ -10,7 +10,7 @@
           <p class="hero-subtitle">
             Your trusted mate for spotting scams, boosting digital skills, and staying secure.
           </p>
-          <button class="hero-button">Get Started</button>
+          
         </div>
       </div>
     </section>

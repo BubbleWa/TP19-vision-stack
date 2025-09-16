@@ -9,12 +9,11 @@
       </p>
     </div>
 
-    <!-- Layout: now only the left document card -->
+    <!-- Input section -->
     <div class="risk-grid">
       <section class="card doc-card">
-        <!-- Toolbar with title + paste -->
+        <!-- Toolbar -->
         <div class="doc-toolbar">
-          <h3>Untitled document</h3>
           <button class="btn ghost" @click="pasteFromClipboard">Paste text</button>
         </div>
 
@@ -22,12 +21,11 @@
         <textarea
           v-model="userInput"
           class="doc-input"
-          placeholder="Paste or type the message here..."
+          placeholder="Paste or type the suspicious message here..."
         ></textarea>
 
         <!-- Actions -->
         <div class="doc-actions">
-          <label class="btn light" for="fileInput">Upload screenshot</label>
           <input
             id="fileInput"
             type="file"
@@ -40,35 +38,89 @@
           </button>
         </div>
 
-        <!-- Result -->
+        <!-- Error message -->
         <div v-if="error" class="result text-red-600">
           {{ error }}
         </div>
 
-        <div v-if="result" class="result">
-          <p><strong>Verdict:</strong> {{ result.verdict }}</p>
-          <p><strong>ML Score:</strong> {{ (result.score_ml ?? 0).toFixed(3) }}</p>
-          <p><strong>Rules Score:</strong> {{ result.score_rules ?? 0 }}</p>
-          <p><strong>Confidence:</strong> {{ Math.round((result.score_ml ?? 0) * 100) }}%</p>
+        <!-- Result panel -->
+        <div v-if="result" class="result-panel">
+          <!-- Top section: Verdict / Confidence / Guide -->
+          <div class="result-grid">
+            <!-- Verdict + Category -->
+            <div class="card result-card">
+              <p><strong>Verdict:</strong>
+                <span :class="result.verdict === 'Scam' ? 'tag danger' : 'tag safe'">
+                  {{ result.verdict || "Unknown" }}
+                </span>
+              </p>
+              <p><strong>Detected Category:</strong> {{ result.category || "Unclassified" }}</p>
+              <p><strong>Authority to Report To:</strong>
+                <span class="tag info">
+                  {{ result.authority ? result.authority : "ScamWatch" }}
+                </span>
+              </p>
 
-          <div v-if="result.reasons?.length">
-            <p><strong>Reasons:</strong></p>
+              <!-- Green button with hyperlink -->
+              <a
+                href="https://www.scamwatch.gov.au/report-a-scam"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn report"
+              >
+                Report to ScamWatch
+              </a>
+            </div>
+
+            <!-- Confidence Score with animated circle -->
+            <div class="card result-card center">
+              <p><strong>Confidence Score</strong></p>
+              <svg class="progress-ring" width="140" height="140">
+                <circle
+                  class="progress-ring__background"
+                  stroke="#e5e7eb"
+                  stroke-width="12"
+                  fill="transparent"
+                  r="60"
+                  cx="70"
+                  cy="70"
+                />
+                <circle
+                  class="progress-ring__circle"
+                  stroke="#7c3aed"
+                  stroke-width="12"
+                  fill="transparent"
+                  r="60"
+                  cx="70"
+                  cy="70"
+                  :style="circleStyle"
+                />
+              </svg>
+              <div class="circle-label">
+                {{ Math.round(animatedScore) }}%
+              </div>
+            </div>
+
+            <!-- Step-by-step Guide -->
+            <div class="card result-card">
+              <p><strong>Step-by-Step Guide</strong></p>
+              <ul class="guide">
+                <li class="ok">✅ Stop contact. Don’t click links or pay.</li>
+                <li class="ok">✅ Take screenshots and save sender details.</li>
+                <li class="ok">✅ If you shared bank details: contact your bank immediately.</li>
+                <li class="ok">✅ Change passwords and enable MFA.</li>
+                <li class="bad">❌ Don’t trust the link inside the message.</li>
+                <li class="ok">✅ Submit to ScamWatch to help authorities track trends.</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Bottom section: Rules -->
+          <div class="card result-card full">
+            <p><strong>Triggered Patterns:</strong></p>
             <ul class="list-disc pl-5">
               <li v-for="(r, i) in result.reasons" :key="i">{{ r }}</li>
             </ul>
-          </div>
-
-          <div v-if="result.highlights?.length">
-            <p><strong>Flags:</strong></p>
-            <div class="flex flex-wrap gap-2">
-              <span
-                v-for="(h, i) in result.highlights"
-                :key="i"
-                class="px-2 py-1 rounded text-xs bg-indigo-100 text-indigo-700"
-              >
-                {{ h.type }}
-              </span>
-            </div>
           </div>
         </div>
       </section>
@@ -77,19 +129,21 @@
 </template>
 
 <script setup>
-import { ref } from "vue"
-import { detectScam } from "@/services/scambot" // ✅ 新增：调用封装的 API
+// Vue 3 composition API
+import { ref, computed } from "vue"
+import { detectScam } from "@/services/scambot"
 
-const userInput = ref("")     // User input text
-const loading = ref(false)    // Loading state
-const error = ref("")         // Error message
-const result = ref(null)      // Backend result
+// States
+const userInput = ref("")
+const loading = ref(false)
+const error = ref("")
+const result = ref(null)
 
-/**
- * Analyze function:
- * - Call backend API via detectScam
- * - Show error if fails
- */
+// Confidence score animation
+const animatedScore = ref(0) // This animates from 0 to real score
+let scoreInterval = null
+
+// Analyze function: call backend API
 async function analyze() {
   error.value = ""
   result.value = null
@@ -99,6 +153,7 @@ async function analyze() {
   loading.value = true
   try {
     result.value = await detectScam(userInput.value.trim())
+    startScoreAnimation(Math.round((result.value.score_ml ?? 0) * 100))
   } catch (e) {
     error.value = e.message || "Something went wrong."
   } finally {
@@ -106,7 +161,33 @@ async function analyze() {
   }
 }
 
-// Paste text from clipboard
+// Animate confidence score with smooth increase
+function startScoreAnimation(target) {
+  clearInterval(scoreInterval)
+  animatedScore.value = 0
+  scoreInterval = setInterval(() => {
+    if (animatedScore.value < target) {
+      animatedScore.value += 1
+    } else {
+      clearInterval(scoreInterval)
+    }
+  }, 15)
+}
+
+// Style for circular progress ring
+const circleStyle = computed(() => {
+  const radius = 60
+  const circumference = 2 * Math.PI * radius
+  const percent = animatedScore.value / 100
+  const offset = circumference - percent * circumference
+  return {
+    strokeDasharray: `${circumference} ${circumference}`,
+    strokeDashoffset: offset,
+    transition: "stroke-dashoffset 0.3s linear"
+  }
+})
+
+// Clipboard paste
 async function pasteFromClipboard() {
   try {
     const txt = await navigator.clipboard.readText()
@@ -116,7 +197,7 @@ async function pasteFromClipboard() {
   }
 }
 
-// Handle file upload
+// File upload handler
 function handleFile(e) {
   const file = e.target.files?.[0]
   if (file) {
@@ -134,35 +215,50 @@ function handleFile(e) {
   font-size: 1rem;
 }
 
-/* Purple header */
+/* Header card */
 .header-card {
-  background: #7c3aed;
+  background: linear-gradient(135deg, #7c3aed, #9333ea);
   color: white;
   text-align: center;
-  padding: 24px 16px;
-  border-radius: 12px;
-  margin-bottom: 20px;
+  padding: 28px 16px;
+  border-radius: 16px;
+  margin-bottom: 24px;
 }
-.header-card h2 { font-size: 1.8rem; margin-bottom: 10px; }
-.header-card p  { font-size: 1rem; line-height: 1.6; }
+.header-card h2 {
+  font-size: 2rem;
+  margin-bottom: 10px;
+  font-family: "Poppins", "Nunito", "Segoe UI", sans-serif;
+  font-weight: 700;
+}
+.header-card p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  font-family: "Poppins", "Nunito", "Segoe UI", sans-serif;
+}
 @media (min-width: 768px) {
   .header-card h2 { font-size: 2.4rem; }
-  .header-card p  { font-size: 1.3rem; }
+  .header-card p { font-size: 1.3rem; }
 }
 
-/* Grid: now only 1 column */
+/* Wider grid */
 .risk-grid {
-  max-width: 800px;
+  max-width: 1200px; /* was 800px */
   margin: 0 auto;
   display: grid;
+  padding: 0 20px;
 }
 
-/* Card */
+/* Card base */
 .card {
   background: #ffffff;
-  border-radius: 14px;
-  padding: 18px;
-  box-shadow: 0 12px 28px rgba(17, 24, 39, .12);
+  border-radius: 18px; /* rounder */
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
 }
 .doc-card { overflow: hidden; }
 
@@ -170,24 +266,24 @@ function handleFile(e) {
 .doc-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   margin-bottom: 10px;
 }
-.doc-toolbar h3 { margin: 0; font-size: 1.1rem; color: #111827; }
 
 /* Textarea */
 .doc-input {
   width: 100%;
-  min-height: 260px;
+  min-height: 200px;
   border: 0;
   outline: 0;
   resize: vertical;
-  border-radius: 10px;
+  border-radius: 12px;
   background: #ffeef0;
   padding: 16px;
   font-size: 1rem;
   line-height: 1.6;
   color: #1f2937;
+  font-family: "Poppins", "Nunito", "Segoe UI", sans-serif;
   box-sizing: border-box;
 }
 
@@ -203,27 +299,151 @@ function handleFile(e) {
 /* Buttons */
 .btn {
   border: 0;
-  border-radius: 10px;
-  padding: 10px 14px;
-  font-weight: 700;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: "Poppins", "Nunito", "Segoe UI", sans-serif;
 }
 .btn.primary {
-  background: #7c3aed;
+  background: linear-gradient(90deg, #7c3aed, #9333ea);
   color: #fff;
   box-shadow: 0 8px 18px rgba(124, 58, 237, .35);
 }
-.btn.primary:hover { filter: brightness(1.05); }
-.btn.light { background: #f3f4f6; color: #374151; }
-.btn.ghost { background: #e9d5ff; color: #5b21b6; }
-
-/* Result */
-.result {
-  margin-top: 16px;
-  padding: 12px;
-  border-radius: 10px;
-  background: #f9fafb;
-  color: #111827;
-  font-weight: 600;
+.btn.primary:hover { filter: brightness(1.1); }
+.btn.ghost {
+  background: #e9d5ff;
+  color: #5b21b6;
 }
+.btn.report {
+  margin-top: 12px;
+  background: linear-gradient(90deg, #10b981, #059669);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 12px;
+}
+.btn.report:hover { filter: brightness(1.1); }
+
+/* Result panel */
+.result-panel {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Result grid layout */
+.result-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 24px; /* more breathing space */
+}
+@media (max-width: 1000px) {
+  .result-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.result-card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+.result-card.center {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.result-card.full {
+  grid-column: span 3;
+}
+
+/* Progress circle */
+.progress-ring__circle {
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  stroke-linecap: round; /* round edges */
+}
+.circle-label {
+  position: absolute;
+  margin-top: -90px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #4c1d95;
+  font-family: "Poppins", "Nunito", "Segoe UI", sans-serif;
+}
+/* Make result cards have light blue background */
+.result-card {
+  background: #f0f9ff; /* very light blue */
+  border-radius: 18px;
+  padding: 20px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* Progress circle thicker stroke */
+.progress-ring__circle {
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  stroke-linecap: round;
+  stroke-width: 18; /* was 12 */
+}
+.progress-ring__background {
+  stroke-width: 18; /* match thickness */
+}
+/* Make result card text bigger */
+.result-card p,
+.result-card li {
+  font-size: 1.05rem; /* slightly larger */
+  color: #111827;     /* ensure text stays dark blackish */
+}
+
+/* Make strong titles (like Verdict:, Detected Category:) stand out */
+.result-card strong {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+/* Step-by-step guide */
+.guide {
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+/* Confidence Score title bigger */
+.result-card.center p {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.circle-label {
+  font-size: 1.8rem; /* bigger percentage */
+  font-weight: 800;
+}
+
+/* Tags */
+.tag {
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: "Poppins", "Nunito", "Segoe UI", sans-serif;
+}
+.tag.danger { background: #fee2e2; color: #b91c1c; }
+.tag.safe { background: #dcfce7; color: #166534; }
+.tag.info { background: #dbeafe; color: #1e40af; }
+
+/* Guide */
+.guide {
+  margin-top: 10px;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  font-family: "Poppins", "Nunito", "Segoe UI", sans-serif;
+}
+.guide .ok { color: #065f46; }
+.guide .bad { color: #991b1b; }
+
 </style>
