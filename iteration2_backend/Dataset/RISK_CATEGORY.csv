@@ -1,0 +1,19 @@
+﻿category_id,Name,description
+1,Phishing,"Fake emails/SMS imitating government, banks or brands to steal info or money"
+2,Identity theft,Misuse of personal information or credentials
+3,Hacking,Unauthorised access to accounts/devices; malware/ransomware
+4,Remote access scams,Scammer convinces victim to install remote-control software
+5,Overpayment scams,Victim overpaid and asked to refund the difference
+6,Mobile premium services,Unexpected premium SMS/charges and subscription traps
+7,Health and medical products,Fake or unsafe health devices/medicines 
+8,Classified scams,Fraud in buy/sell classifieds and marketplaces
+9,Online shopping scams,"Fake stores, non-delivery, counterfeit goods"
+10,False billing,Scam invoices or domain/advertising renewal bills
+11,"Threats to life, arrest or other",Impersonation of police/government demanding payment under threat
+12,Investment scams,Fake investment platforms/crypto/forex with guaranteed returns
+13,Dating and romance scams,Relationship grooming leading to requests for money or gifts
+14,Fake charity scams,Fraudulent fundraising using disaster or cause appeal
+15,Unexpected prize & lottery scams,Claims of winnings requiring fees or personal info
+16,Rebate scams,Fake refunds/tax rebates requiring payment or credentials
+17,Jobs and employment scams,"Fake job offers, recruitment fees, reshipping mules"
+18,Travel prize scams,Free/discounted travel requiring fees or card details
