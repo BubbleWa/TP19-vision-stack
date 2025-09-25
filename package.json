@@ -15,12 +15,18 @@
     "copy-404": "copyfiles dist/index.html dist/404.html"
   },
   "dependencies": {
-    "axios": "^1.11.0",
+    "@lottiefiles/lottie-player": "^2.0.12",
+    "aos": "^2.3.4",
+    "axios": "^1.12.2",
     "chart.js": "^4.5.0",
+    "gsap": "^3.13.0",
+    "lottie-web": "^5.13.0",
     "vue": "^3.5.18",
     "vue-chartjs": "^5.3.2",
     "vue-i18n": "^11.1.11",
-    "vue-router": "^4.5.1"
+    "vue-router": "^4.5.1",
+    "vue3-lottie": "^3.3.1",
+    "vue3-particles": "^2.12.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.12",
