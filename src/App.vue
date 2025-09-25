@@ -37,7 +37,7 @@ const goToScamBot = () => {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background: #6d28d9;
+  background: #45C4B0;
   color: white;
   padding: 10px 14px;
   border-radius: 12px;
@@ -54,7 +54,7 @@ const goToScamBot = () => {
   height: 30px;
 }
 .scambot-floating:hover {
-  background: #4c1d95;
+  background: #45C4B0;
   transform: translateY(-3px);
 }
 </style>

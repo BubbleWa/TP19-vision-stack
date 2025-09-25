@@ -1,21 +1,21 @@
 <template>
   <header class="navbar-header">
     <div class="navbar-container">
-      
+      <!-- Left side: logo + brand -->
       <div class="navbar-left">
         <img src="/logo.png" alt="CyberMate logo" class="logo" />
-        <span class="brand">CyberMate</span>
+        <span class="brand">MyCyberMate</span>
       </div>
 
-      
-      <nav class="navbar-nav" :class="{ open: menuOpen }">
-        <router-link to="/">Home</router-link>
-        <router-link to="/dashboard">Dashboard</router-link>
-        <router-link to="/scambot">ScamBot</router-link>
-        <router-link to="/riskscore">Risk Score</router-link>
+      <!-- Pill-style navigation -->
+      <nav class="navbar-nav pills-nav" :class="{ open: menuOpen }">
+        <router-link to="/" :class="{ active: isActive('/') }">Home</router-link>
+        <router-link to="/dashboard" :class="{ active: isActive('/dashboard') }">Dashboard</router-link>
+        <router-link to="/scambot" :class="{ active: isActive('/scambot') }">ScamBot</router-link>
+        <router-link to="/riskscore" :class="{ active: isActive('/riskscore') }">Risk Score</router-link>
       </nav>
 
-      
+      <!-- Mobile menu button -->
       <button class="menu-btn" @click="menuOpen = !menuOpen">☰</button>
     </div>
   </header>
@@ -23,23 +23,33 @@
 
 <script setup>
 import { ref } from "vue"
+import { useRoute } from "vue-router"
+
+// Toggle menu on mobile
 const menuOpen = ref(false)
+
+// Detect active route for pill highlight
+const route = useRoute()
+function isActive(path) {
+  return route.path === path
+}
 </script>
 
 <style scoped>
+/* ---------- Header container ---------- */
 .navbar-header {
-  background: #3b1d74; 
+  background: #45C4B0;
   padding: 0;
   position: relative;
-  z-index: 1000; 
+  z-index: 1000;
 }
 
 .navbar-container {
-  max-width: 1300px;
+  max-width: 1600px;
   margin: 0 auto;
   display: flex;
   align-items: center;
-  padding: 16px 32px;
+  padding: 12px 12px;
   justify-content: space-between;
 }
 
@@ -49,41 +59,48 @@ const menuOpen = ref(false)
 }
 
 .logo {
-  width: 40px;
-  height: 40px;
+  width: 80px;
+  height: 80px;
   margin-right: 10px;
 }
 
 .brand {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #ffffff;
+  color: #DAFDBA;
   margin-right: 24px;
   font-family: 'Segoe UI', sans-serif;
 }
 
-
+/* ---------- Pill navigation ---------- */
 .navbar-nav {
   display: flex;
-  gap: 32px;
+  gap: 16px;
 }
+
 .navbar-nav a {
-  font-size: 1.4rem;
-  color: #ffffff;
+  font-size: 1.2rem;
+  padding: 10px 20px;
+  border-radius: 999px; /* Pill shape */
+  background-color: transparent;
+  color: white;
   text-decoration: none;
   font-weight: 500;
-  transition: color 0.3s;
+  transition: all 0.3s ease;
 }
+
 .navbar-nav a:hover {
-  color: #60a5fa;
-  text-decoration: underline;
-}
-.navbar-nav a.router-link-active {
-  color: #60a5fa;
-  font-weight: bold;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
 }
 
+.navbar-nav a.active {
+  background-color: #ffffff;
+  color: #45C4B0; /* Main theme color */
+  font-weight: 600;
+}
 
+/* ---------- Mobile button ---------- */
 .menu-btn {
   display: none;
   font-size: 2rem;
@@ -93,25 +110,27 @@ const menuOpen = ref(false)
   cursor: pointer;
 }
 
-
+/* ---------- Responsive ---------- */
 @media (max-width: 768px) {
   .navbar-nav {
-    display: none; 
+    display: none;
     flex-direction: column;
-    background: #3b1d74;
+    background: #012030;
     position: absolute;
-    top: 60px;
+    top: 70px;
     right: 20px;
     padding: 16px;
-    border-radius: 8px;
-    gap: 16px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    border-radius: 12px;
+    gap: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   }
+
   .navbar-nav.open {
-    display: flex; 
+    display: flex;
   }
+
   .menu-btn {
-    display: block; 
+    display: block;
   }
 }
 </style>

@@ -1,155 +1,169 @@
 <template>
-  <div class="scambot-page">
-    <!-- Purple header card -->
-    <div class="header-card">
-      <h2>🤖 ScamDetector</h2>
-      <p>
-        Hi! I’m ScamMate, your scam-spotting buddy.<br>
-        Paste a suspicious message or upload a screenshot—I’ll flag risks for you.
+  <div class="page-wrapper">
+    <!-- ===== Header ===== -->
+    <div class="header-card" data-aos="fade-down">
+      <div class="header-flex">
+        <!-- Left: Matrix animation -->
+        <div class="ai-matrix-loader">
+          <span class="digit">0</span>
+          <span class="digit">1</span>
+          <span class="digit">0</span>
+          <span class="digit">1</span>
+          <span class="digit">0</span>
+          <span class="digit">1</span>
+          <span class="digit">0</span>
+          <span class="digit">1</span>
+          <div class="glow"></div>
+        </div>
+
+        <!-- Center: Title -->
+        <h2 class="scam-title">ScamDetector</h2>
+
+        <!-- Right: Bot animation -->
+        <lottie-player
+          src="/AI bot.json"
+          background="transparent"
+          speed="1"
+          style="width: 180px; height: 180px;"
+          loop
+          autoplay
+        />
+      </div>
+
+      <p style="font-size: 25px;">
+        Hi! I’m ScamMate, your scam-spotting buddy.<br />
+        Paste a suspicious message —I’ll flag risks for you.
       </p>
     </div>
 
-    <!-- Input section -->
-    <div class="risk-grid">
-      <section class="card doc-card">
-        <!-- Toolbar -->
-        <div class="doc-toolbar">
-          <button class="btn ghost" @click="pasteFromClipboard">Paste text</button>
+    <!-- ===== Input section (radar on the left, textarea on the right) ===== -->
+    <section class="input-card" data-aos="fade-up">
+      <div class="input-row">
+        <!-- Radar on the left -->
+        <div class="radar-col">
+          <div class="loader">
+            <span></span>
+          </div>
         </div>
 
-        <!-- Input textarea -->
+        <!-- Textarea on the right -->
         <textarea
           v-model="userInput"
           class="doc-input"
           placeholder="Paste or type the suspicious message here..."
         ></textarea>
+      </div>
 
-        <!-- Actions -->
-        <div class="doc-actions">
-          <input
-            id="fileInput"
-            type="file"
-            class="hidden"
-            accept="image/*,text/plain"
-            @change="handleFile"
-          >
-          <button class="btn primary" @click="analyze" :disabled="loading">
-            {{ loading ? "Checking..." : "Detect" }}
-          </button>
-        </div>
+      <!-- Action button below -->
+      <button class="btn primary" @click="analyze" :disabled="loading">
+        {{ loading ? "Checking..." : "Detect" }}
+      </button>
+    </section>
 
-        <!-- Error message -->
-        <div v-if="error" class="result text-red-600">
-          {{ error }}
-        </div>
+    <!-- ===== Error ===== -->
+    <div v-if="error" class="result text-red-600">
+      {{ error }}
+    </div>
 
-        <!-- Result panel -->
-        <div v-if="result" class="result-panel">
-          <!-- Top section: Verdict / Confidence / Guide -->
-          <div class="result-grid">
-            <!-- Verdict + Category -->
-            <div class="card result-card">
-              <p><strong>Verdict:</strong>
-                <span :class="result.verdict === 'Scam' ? 'tag danger' : 'tag safe'">
-                  {{ result.verdict || "Unknown" }}
-                </span>
-              </p>
-              <p><strong>Detected Category:</strong> {{ result.category || "Unclassified" }}</p>
-              <p><strong>Authority to Report To:</strong>
-                <span class="tag info">
-                  {{ result.authority ? result.authority : "ScamWatch" }}
-                </span>
-              </p>
+  <!-- ===== Results ===== -->
+  <div v-if="result" class="result-panel" data-aos="fade-up">
+    <!-- Verdict + Category -->
+    <div class="stack">
+      <div class="card">
+        <p>
+          <strong>Verdict:</strong>
+          <span :class="result.verdict === 'Scam' ? 'tag danger' : 'tag safe'">
+            {{ result.verdict || "Unknown" }}
+          </span>
+        </p>
+        <p v-if="result.category">
+          <strong>Category:</strong>
+          <span class="tag">{{ result.category }}</span>
+        </p>
+      </div>
+    </div>
 
-              <!-- Green button with hyperlink -->
-              <a
-                href="https://www.scamwatch.gov.au/report-a-scam"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="btn report"
-              >
-                Report to ScamWatch
-              </a>
-            </div>
+    <!-- Confidence Score -->
+    <div class="stack">
+      <div class="card center">
+        <p>
+          <strong>Confidence Score:</strong>
+          <span class="score-text">{{ Math.round(animatedScore) }}%</span>
+        </p>
+        <svg class="progress-ring" width="140" height="140">
+          <circle
+            class="progress-ring__background"
+            stroke="#e5e7eb"
+            fill="transparent"
+            r="60"
+            cx="70"
+            cy="70"
+          />
+          <circle
+            class="progress-ring__circle"
+            stroke="#7c3aed"
+            fill="transparent"
+            r="60"
+            cx="70"
+            cy="70"
+            :style="circleStyle"
+          />
+        </svg>
+      </div>
+    </div>
 
-            <!-- Confidence Score with animated circle -->
-            <div class="card result-card center">
-              <p><strong>Confidence Score</strong></p>
-              <svg class="progress-ring" width="140" height="140">
-                <circle
-                  class="progress-ring__background"
-                  stroke="#e5e7eb"
-                  stroke-width="12"
-                  fill="transparent"
-                  r="60"
-                  cx="70"
-                  cy="70"
-                />
-                <circle
-                  class="progress-ring__circle"
-                  stroke="#7c3aed"
-                  stroke-width="12"
-                  fill="transparent"
-                  r="60"
-                  cx="70"
-                  cy="70"
-                  :style="circleStyle"
-                />
-              </svg>
-              <div class="circle-label">
-                {{ Math.round(animatedScore) }}%
-              </div>
-            </div>
+    <!-- Step Guide (dynamic from API) -->
+    <div class="stack" v-if="result.checklist?.items?.length">
+      <div class="card">
+        <p><strong>Step-by-Step Guide</strong></p>
+        <ul class="guide">
+          <li v-for="(item, i) in result.checklist.items" :key="i">
+            {{ item }}
+          </li>
+        </ul>
+      </div>
+    </div>
 
-            <!-- Step-by-step Guide -->
-            <div class="card result-card">
-              <p><strong>Step-by-Step Guide</strong></p>
-              <ul class="guide">
-                <li class="ok">✅ Stop contact. Don’t click links or pay.</li>
-                <li class="ok">✅ Take screenshots and save sender details.</li>
-                <li class="ok">✅ If you shared bank details: contact your bank immediately.</li>
-                <li class="ok">✅ Change passwords and enable MFA.</li>
-                <li class="bad">❌ Don’t trust the link inside the message.</li>
-                <li class="ok">✅ Submit to ScamWatch to help authorities track trends.</li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- Bottom section: Rules -->
-          <div class="card result-card full">
-            <p><strong>Triggered Patterns:</strong></p>
-            <ul class="list-disc pl-5">
-              <li v-for="(r, i) in result.reasons" :key="i">{{ r }}</li>
-            </ul>
-          </div>
-        </div>
-      </section>
+    <!-- Triggered patterns -->
+    <div class="stack">
+      <div class="card full">
+        <p><strong>Triggered Patterns:</strong></p>
+        <ul class="list-disc pl-5">
+          <li v-for="(r, i) in result.reasons" :key="i">{{ r }}</li>
+        </ul>
+        <!-- Report button -->
+        <a
+          :href="result.reporting_guide?.url || 'https://www.scamwatch.gov.au/report-a-scam'"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="btn report"
+        >
+          Report to ScamWatch
+        </a>
+      </div>
     </div>
   </div>
-</template>
+  </div>
+  </template>
 
 <script setup>
-// Vue 3 composition API
-import { ref, computed } from "vue"
+import { ref, computed, onMounted } from "vue"
 import { detectScam } from "@/services/scambot"
+import AOS from "aos"
 
-// States
+// State
 const userInput = ref("")
 const loading = ref(false)
 const error = ref("")
 const result = ref(null)
-
-// Confidence score animation
-const animatedScore = ref(0) // This animates from 0 to real score
+const animatedScore = ref(0)
 let scoreInterval = null
 
-// Analyze function: call backend API
+// Analyze
 async function analyze() {
   error.value = ""
   result.value = null
-
   if (!userInput.value.trim()) return
-
   loading.value = true
   try {
     result.value = await detectScam(userInput.value.trim())
@@ -161,289 +175,340 @@ async function analyze() {
   }
 }
 
-// Animate confidence score with smooth increase
+// Animate confidence %
 function startScoreAnimation(target) {
   clearInterval(scoreInterval)
   animatedScore.value = 0
   scoreInterval = setInterval(() => {
-    if (animatedScore.value < target) {
-      animatedScore.value += 1
-    } else {
-      clearInterval(scoreInterval)
-    }
+    if (animatedScore.value < target) animatedScore.value += 1
+    else clearInterval(scoreInterval)
   }, 15)
 }
 
-// Style for circular progress ring
+// Circle stroke style
 const circleStyle = computed(() => {
-  const radius = 60
-  const circumference = 2 * Math.PI * radius
-  const percent = animatedScore.value / 100
-  const offset = circumference - percent * circumference
+  const r = 60
+  const c = 2 * Math.PI * r
+  const pct = animatedScore.value / 100
   return {
-    strokeDasharray: `${circumference} ${circumference}`,
-    strokeDashoffset: offset,
+    strokeDasharray: `${c} ${c}`,
+    strokeDashoffset: c - pct * c,
     transition: "stroke-dashoffset 0.3s linear"
   }
 })
 
-// Clipboard paste
-async function pasteFromClipboard() {
-  try {
-    const txt = await navigator.clipboard.readText()
-    if (txt) userInput.value = txt
-  } catch (e) {
-    console.warn("Clipboard not available", e)
-  }
-}
-
-// File upload handler
-function handleFile(e) {
-  const file = e.target.files?.[0]
-  if (file) {
-    userInput.value += (userInput.value ? "\n\n" : "") + `[Uploaded file: ${file.name}]`
-  }
-}
+onMounted(() => AOS.init())
 </script>
 
 <style scoped>
-/* Page background */
-.scambot-page {
-  background: #f3e8ff;
-  min-height: 100vh;
-  padding: 20px;
-  font-size: 1rem;
+/* ===== Score text inside results ===== */
+.score-text {
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #45C4B0;
+  margin-left: 8px; /* spacing from label */
 }
 
-/* Header card */
+/* ===== Page wrapper ===== */
+.page-wrapper {
+  min-height: 100vh;
+  background: #C8E6C9; /* light green background */
+  padding: 20px;
+}
+
+/* ===== Header animation (matrix digits) ===== */
+.ai-matrix-loader {
+  width: 120px;
+  height: 160px;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  z-index: 10;
+}
+.digit {
+  color: #00ff88;
+  font-family: monospace;
+  font-size: 18px;
+  text-align: center;
+  text-shadow: 0 0 5px #00ff88;
+  animation: matrix-fall 2s infinite, matrix-flicker 0.5s infinite;
+  opacity: 0;
+}
+@keyframes matrix-fall {
+  0% { transform: translateY(-50px); opacity: 0; }
+  20%, 80% { transform: translateY(0); opacity: 0.8; }
+  100% { transform: translateY(50px); opacity: 0; }
+}
+@keyframes matrix-flicker {
+  0%, 19%, 21%, 100% { opacity: 0.8; }
+  20% { opacity: 0.2; }
+}
+
+/* ===== Header card ===== */
 .header-card {
-  background: linear-gradient(135deg, #7c3aed, #9333ea);
+  background: linear-gradient(135deg, #45c4b0, #9aeba3);
   color: white;
   text-align: center;
   padding: 28px 16px;
   border-radius: 16px;
-  margin-bottom: 24px;
+  margin: 20px;
 }
-.header-card h2 {
-  font-size: 2rem;
-  margin-bottom: 10px;
-  font-family: "Poppins", "Nunito", "Segoe UI", sans-serif;
-  font-weight: 700;
-}
-.header-card p {
-  font-size: 1.1rem;
-  line-height: 1.6;
-  font-family: "Poppins", "Nunito", "Segoe UI", sans-serif;
-}
-@media (min-width: 768px) {
-  .header-card h2 { font-size: 2.4rem; }
-  .header-card p { font-size: 1.3rem; }
+/* Gradient scam-title (always active) */
+.scam-title {
+  font-size: 4rem;
+  font-weight: 800;
+  background: linear-gradient(
+    90deg,
+    #3b82f6,
+    #22c55e,
+    #facc15,
+    #ec4899,
+    #3b82f6
+  );
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientMove 5s infinite linear;
 }
 
-/* Wider grid */
-.risk-grid {
-  max-width: 1200px; /* was 800px */
-  margin: 0 auto;
+/* Responsive font size */
+@media (min-width: 769px) {
+  .scam-title {
+    font-size: 3.5rem;
+  }
+}
+@media (max-width: 768px) {
+  .scam-title {
+    font-size: clamp(2rem, 5vw, 3rem);
+  }
+}
+
+/* Header responsive layout */
+@media (max-width: 768px) {
+  .header-flex {
+    grid-template-columns: 1fr; /* stack vertically */
+    text-align: center;
+  }
+}
+.header-flex {
   display: grid;
-  padding: 0 20px;
+  grid-template-columns: 120px 1fr 180px; 
+  align-items: center;
+  gap: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
-/* Card base */
-.card {
-  background: #ffffff;
-  border-radius: 18px; /* rounder */
-  padding: 20px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+@media (max-width: 768px) {
+  .header-flex {
+    grid-template-columns: 1fr; 
+    text-align: center;
+  }
+    .header-flex .ai-matrix-loader {
+    margin: 0 auto; 
+  }
+  .header-flex lottie-player {
+    margin: 0 auto; 
+  }
 }
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
-}
-.doc-card { overflow: hidden; }
 
-/* Toolbar */
-.doc-toolbar {
+
+/* ===== Input card (radar + textarea) ===== */
+.input-card {
+  position: relative;
+  width: 80%;
+  max-width: 1300px;
+  margin: 60px auto;
+  padding: 20px 20px 24px;
+  border-radius: 20px;
+  background: #07182e; /* dark card background */
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+}
+.input-row {
+  display: flex;
+  align-items: stretch;
+  gap: 20px;
+  width: 100%;
+}
+@media (max-width: 768px) {
+  .input-row {
+    flex-direction: column; /* stack vertically on mobile */
+  }
+  .radar-col {
+    margin-bottom: 16px;
+  }
+  .doc-input {
+    flex: 1;
+    min-width: 250px;   /* prevent too narrow */
+    max-width: 500px;   /* prevent too wide */
+    min-height: 120px;
+    max-height: 220px;
+    border-radius: 12px;
+    border: none;
+    padding: 14px;
+    font-size: 1.2rem;
+    color: #f3f6fd;
+    background: #0a1527;
+    resize: vertical;
+    outline: none;
+  }
+}
+
+/* ===== Radar column ===== */
+.radar-col {
+  flex: 0 0 240px; /* fixed width */
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  margin-bottom: 10px;
+  justify-content: center;
 }
 
-/* Textarea */
-.doc-input {
-  width: 100%;
-  min-height: 200px;
-  border: 0;
-  outline: 0;
-  resize: vertical;
-  border-radius: 12px;
-  background: #ffeef0;
-  padding: 16px;
-  font-size: 1rem;
-  line-height: 1.6;
-  color: #1f2937;
-  font-family: "Poppins", "Nunito", "Segoe UI", sans-serif;
-  box-sizing: border-box;
-}
-
-/* Actions */
-.doc-actions {
+/* ===== Radar loader ===== */
+.loader {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  background: transparent;
+  border-radius: 50%;
+  border: 1px solid #333;
   display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  margin-top: 12px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  filter: drop-shadow(0 14px 28px rgba(0,0,0,0.45));
 }
-.hidden { display: none; }
+.loader::before {
+  content: '';
+  position: absolute;
+  inset: 20px;
+  border: 1px dashed #444;
+  border-radius: 50%;
+}
+.loader::after {
+  content: '';
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 1px dashed #444;
+}
+.loader span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 50%;
+  height: 100%;
+  transform-origin: top left;
+  animation: radar81 2s linear infinite;
+  border-top: 1px dashed #fff;
+}
+.loader span::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: seagreen;
+  transform-origin: top left;
+  transform: rotate(-55deg);
+  filter: blur(30px) drop-shadow(20px 20px 20px seagreen);
+}
+@keyframes radar81 { to { transform: rotate(360deg); } }
 
-/* Buttons */
-.btn {
-  border: 0;
+/* ===== Textarea ===== */
+.doc-input {
+  flex: 1 1 auto;
+  min-height: 220px;
   border-radius: 12px;
-  padding: 10px 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: "Poppins", "Nunito", "Segoe UI", sans-serif;
+  border: none;
+  padding: 16px;
+  font-size: 1.5rem;
+  color: #f3f6fd;
+  background: #183563;
+  resize: vertical;
+  outline: none;
 }
+
+/* ===== Buttons ===== */
 .btn.primary {
-  background: linear-gradient(90deg, #7c3aed, #9333ea);
-  color: #fff;
-  box-shadow: 0 8px 18px rgba(124, 58, 237, .35);
+  margin-top: 16px;
+  background: linear-gradient(90deg, #00c3ff, #7b2ff7);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.btn.primary:hover { filter: brightness(1.1); }
-.btn.ghost {
-  background: #e9d5ff;
-  color: #5b21b6;
+.btn.primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 12px rgba(123, 47, 247, 0.6);
 }
 .btn.report {
-  margin-top: 12px;
   background: linear-gradient(90deg, #10b981, #059669);
   color: white;
   padding: 10px 16px;
   border-radius: 12px;
+  display: inline-block;
+  margin-top: 12px;
+  font-weight: 600;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.btn.report:hover { filter: brightness(1.1); }
+.btn.report:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+}
 
-/* Result panel */
+/* ===== Results panel (stacked cards) ===== */
 .result-panel {
   margin-top: 20px;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 20px;
 }
-
-/* Result grid layout */
-.result-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 24px; /* more breathing space */
-}
-@media (max-width: 1000px) {
-  .result-grid {
-    grid-template-columns: 1fr;
-  }
-}
-.result-card {
-  background: #ffffff;
-  border-radius: 18px;
+.stack { transition: 0.25s ease; }
+.stack:hover { transform: rotate(5deg); }
+.stack:hover .card:before { transform: translateY(-2%) rotate(-4deg); }
+.stack:hover .card:after  { transform: translateY(2%) rotate(4deg); }
+.card {
+  border: 4px solid;
+  background-color: #fff;
+  position: relative;
+  transition: 0.15s ease;
+  cursor: pointer;
   padding: 20px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  height: 100%;
 }
-.result-card.center {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-.result-card.full {
-  grid-column: span 3;
-}
-
-/* Progress circle */
-.progress-ring__circle {
-  transform: rotate(-90deg);
-  transform-origin: 50% 50%;
-  stroke-linecap: round; /* round edges */
-}
-.circle-label {
+.card:before,
+.card:after {
+  content: "";
   position: absolute;
-  margin-top: -90px;
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: #4c1d95;
-  font-family: "Poppins", "Nunito", "Segoe UI", sans-serif;
+  inset: 0;
+  border: 4px solid;
+  background-color: #fff;
+  transform-origin: center;
+  z-index: -1;
+  transition: 0.15s ease;
 }
-/* Make result cards have light blue background */
-.result-card {
-  background: #f0f9ff; /* very light blue */
-  border-radius: 18px;
-  padding: 20px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-}
+.card:before { transform: translateY(-2%) rotate(-6deg); }
+.card:after  { transform: translateY( 2%) rotate( 6deg); }
 
-/* Progress circle thicker stroke */
+/* ===== Confidence score circle ===== */
 .progress-ring__circle {
   transform: rotate(-90deg);
   transform-origin: 50% 50%;
   stroke-linecap: round;
-  stroke-width: 18; /* was 12 */
+  stroke-width: 18;
 }
-.progress-ring__background {
-  stroke-width: 18; /* match thickness */
-}
-/* Make result card text bigger */
-.result-card p,
-.result-card li {
-  font-size: 1.05rem; /* slightly larger */
-  color: #111827;     /* ensure text stays dark blackish */
-}
-
-/* Make strong titles (like Verdict:, Detected Category:) stand out */
-.result-card strong {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #111827;
-}
-
-/* Step-by-step guide */
-.guide {
-  font-size: 1.05rem;
-  line-height: 1.7;
-}
-
-/* Confidence Score title bigger */
-.result-card.center p {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 10px;
-}
+.progress-ring__background { stroke-width: 18; }
 .circle-label {
-  font-size: 1.8rem; /* bigger percentage */
+  position: absolute;
+  margin-top: -90px;
+  font-size: 1.8rem;
   font-weight: 800;
+  color: #45C4B0;
 }
 
-/* Tags */
-.tag {
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  font-family: "Poppins", "Nunito", "Segoe UI", sans-serif;
-}
-.tag.danger { background: #fee2e2; color: #b91c1c; }
-.tag.safe { background: #dcfce7; color: #166534; }
-.tag.info { background: #dbeafe; color: #1e40af; }
-
-/* Guide */
-.guide {
-  margin-top: 10px;
-  font-size: 0.95rem;
-  line-height: 1.6;
-  font-family: "Poppins", "Nunito", "Segoe UI", sans-serif;
-}
-.guide .ok { color: #065f46; }
-.guide .bad { color: #991b1b; }
-
+/* ===== Tags ===== */
+.tag.danger { background: #fee2e2; color: #b91c1c; padding: 2px 6px; border-radius: 6px; }
+.tag.safe   { background: #dcfce7; color: #166534; padding: 2px 6px; border-radius: 6px; }
 </style>

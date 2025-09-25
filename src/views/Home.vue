@@ -1,75 +1,117 @@
 <template>
   <div class="page-wrapper">
-    <!-- Hero Section -->
+
+    <!-- ===== Hero Section ===== -->
     <section class="hero-banner">
       <div class="hero-overlay">
         <div class="hero-content">
-          <h2 class="hero-title">
-            Stay Safe Online with <span class="highlight">CyberMate</span>
-          </h2>
-          <p class="hero-subtitle">
-            Your trusted mate for spotting scams, boosting digital skills, and staying secure.
-          </p>
-          
+          <div class="hero-content">
+            <h2 class="hero-title">
+              Stay Safe Online with <span class="highlight">CyberMate</span>
+            </h2>
+            <p class="hero-subtitle">
+              Your trusted mate for spotting scams, boosting digital skills, and staying secure.
+            </p>
+
+            <!-- Hero action buttons -->
+            <div class="hero-buttons">
+              <button class="hero-btn" @click="$router.push('/scambot')">ScamBot</button>
+              <button class="hero-btn" @click="$router.push('/riskscore')">Risk Score</button>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- About Section -->
+    <!-- ===== About Section ===== -->
     <section class="about-section">
       <div class="about-container">
+
+        <!-- Left text -->
         <div class="about-text">
           <h3>About CyberMate</h3>
           <p>
-            CyberMate empowers young Australians to recognise, avoid, and report scams.
+            CyberMate empowers aged 55 and above Australians to recognise, avoid, and report scams.
             Through interactive dashboards, a scam detector bot, and a risk score tracker,
             we make online safety engaging and easy.
           </p>
+          <button class="explore-btn" @click="goToDashboard">
+            Explore Dashboard
+          </button>
         </div>
 
+        <!-- Right stats cards -->
         <div class="about-stats">
           <div
             v-for="(stat, index) in stats"
             :key="index"
             class="stat-card"
-            :style="{ backgroundColor: stat.color }"
+            @click="toggleFlip(index)"  
           >
-            <h4>{{ stat.value }}</h4>
-            <p>{{ stat.label }}</p>
+            <div class="stat-inner" :class="{ flipped: stat.isFlipped }">
+
+              <!-- Front side -->
+              <div
+                class="stat-front"
+                :style="{
+                  backgroundImage: `url(${stat.image})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }"
+              >
+                <h4>{{ stat.value }}</h4>
+              </div>
+
+              <!-- Back side -->
+              <div class="stat-back">
+                <p>{{ stat.label }}</p>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="explore-container">
-        <button class="explore-btn" @click="goToDashboard">Explore Dashboard</button>
       </div>
     </section>
 
-    <!-- ScamBot Section -->
+    <!-- ===== ScamBot Section ===== -->
     <section class="bot-section">
       <div class="bot-container">
-        <div class="bot-image">
-          <img src="/bot.png" alt="Scam Detector Bot" />
+
+        <!-- Left: Chat bubbles -->
+        <div class="chat-box">
+          <div class="bubble user">
+            Got this message:<br />
+            “Your parcel is held. Pay $3.50 to release: bit.ly/…”
+          </div>
+          <div class="bubble bot">
+            ⚠️ Risky: urgent payment + shortened link. Do not pay or click.
+          </div>
+          <div class="bubble user">
+            What should I do?
+          </div>
+          <div class="bubble bot">
+            Delete the message and report to Scamwatch.
+          </div>
         </div>
-        <div class="bot-text">
-          <h3>
-            Meet our <span class="highlight">Scam Detector Bot</span>
-          </h3>
+
+        <!-- Right: Info + button -->
+        <div class="bot-info">
+          <h3>Meet our <span class="highlight">Scam Detector Bot</span></h3>
           <p>
             Just paste a suspicious message,<br />
             and our AI will instantly tell you if it looks like a scam.
           </p>
           <button class="bot-button" @click="goToScamBot">Explore ScamBot</button>
         </div>
+
       </div>
     </section>
 
-    <!-- Risk Score Section -->
+    <!-- ===== Risk Score Section ===== -->
     <section class="risk-section">
       <div class="risk-container">
-        <div class="risk-image">
-          <img src="/risk-meter.png" alt="Risk Score Meter" />
-        </div>
+
+        <!-- Left: Text -->
         <div class="risk-text">
           <h3>Risk Score Measure</h3>
           <p>
@@ -77,62 +119,88 @@
             Based on your online activity and scam history, get a score that
             shows your digital risk level.
           </p>
-          <button class="risk-button" @click="goToRiskScore">Measure your Risk Score</button>
+          <button class="risk-button" @click="goToRiskScore">
+            Measure your Risk Score
+          </button>
         </div>
+
+        <!-- Right: Animation -->
+        <div class="risk-animation">
+          <Vue3Lottie
+            animationLink="/riskimage.json"
+            :loop="true"
+            :autoplay="true"
+          />
+        </div>
+
       </div>
     </section>
 
-    <!-- ScamBot in the right corner -->
+    <!-- ===== Floating ScamBot button ===== -->
     <div class="scambot-floating" @click="goToScamBot">
       <img src="/bot.png" alt="ScamBot" />
       <span>ScamBot</span>
     </div>
+
   </div>
 </template>
-
 
 <script setup>
 import { ref } from "vue"
 import { useRouter } from "vue-router"
+import { Vue3Lottie } from "vue3-lottie"
 
-// Update stats content according to new requirements
+// Stats cards data
 const stats = ref([
   { 
-    value: "💡 Did you know?", 
+    value: "Did you know?", 
     label: "Australians lose billions every year to scams, making online awareness more important than ever.", 
-    color: "#bae6fd" 
+    color: "#bae6fd",
+    image: "/img1.png",
+    isFlipped: false
   },
   { 
-    value: "👥 Who’s at risk?", 
+    value: "Who’s at risk?", 
     label: "In 2025, over 7,000 Australians aged 55+ fell victim to scams nationwide.", 
-    color: "#fecdd3" 
+    color: "#fecdd3",
+    image: "/img2.png",
+    isFlipped: false
   },
   { 
-    value: "💰 Reported losses", 
+    value: "Reported losses", 
     label: "Scammers stole more than $8.6 million from older Australians in 2025 alone.", 
-    color: "#fecaca" 
+    color: "#fecaca",
+    image: "/img3.png",
+    isFlipped: false
   },
   { 
-    value: "⚠️ Top scams to watch", 
+    value: "Top scams to watch", 
     label: "Investment · Phishing · Romance", 
-    color: "#fde68a" 
+    color: "#fde68a",
+    image: "/img4.png",
+    isFlipped: false
   }
 ])
 
-
-
+// Router navigation
 const router = useRouter()
 const goToDashboard = () => router.push("/dashboard")
 const goToScamBot = () => router.push("/scambot")
 const goToRiskScore = () => router.push("/riskscore")
+
+// Toggle flip for mobile (click)
+const toggleFlip = (index) => {
+  stats.value[index].isFlipped = !stats.value[index].isFlipped
+}
 </script>
 
-
 <style scoped>
+
+/* ===== Page Wrapper ===== */
 .page-wrapper {
-  background-color: #f3e8ff;
+  background-color: #C8E6C9;
   min-height: 100vh;
-  padding: 20px 0;
+  padding: 0;
 }
 
 /* ===== HERO ===== */
@@ -140,72 +208,132 @@ const goToRiskScore = () => router.push("/riskscore")
   background-image: url("/cyber-bg.png");
   background-size: cover;
   background-position: center;
-  height: 400px;
+  height: 400px;               /* Fixed height */
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
 }
+
 .hero-overlay {
-  background-color: rgba(0, 0, 0, 0.5);
+  position: absolute;          
+  top: 0;
+  left: 0;
   width: 100%;
-  height: 100%;
+  height: 100%;                
+  background-color: rgba(0, 0, 0, 0.4);  /* Transparent overlay */
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
 .hero-content {
+  position: relative;          
   text-align: center;
   padding: 0 16px;
 }
+
+/* Title with rainbow gradient */
 .hero-title {
-  font-size: 2rem;
+  font-size: 4rem;             
   font-weight: 800;
-  color: white;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   line-height: 1.3;
+  background: linear-gradient(
+    90deg,
+    #3b82f6,   
+    #22c55e,   
+    #facc15,   
+    #ec4899,   
+    #3b82f6    
+  );
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientMove 5s infinite linear;
 }
-@media (min-width: 768px) {
-  .hero-title {
-    font-size: 3.5rem;
-  }
-}
+
+/* Subtitle white */
 .hero-subtitle {
-  color: #e5e7eb;
-  font-size: 1rem;
+  color: white;
+  font-size: 1.5rem;
   margin-bottom: 20px;
 }
-@media (min-width: 768px) {
+
+/* Responsive Adjustments */
+@media (max-width: 1024px) {
+  .hero-title {
+    font-size: 3rem;
+  }
   .hero-subtitle {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
   }
 }
-.hero-button {
-  background: #6366f1;
+
+@media (max-width: 640px) {
+  .hero-title {
+    font-size: 2rem;
+  }
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+}
+
+/* Gradient animation */
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+/* ===== Hero Buttons ===== */
+.hero-buttons {
+  display: flex;
+  gap: 40px;
+  margin-top: 20px;
+  justify-content: center;   
+}
+
+.hero-btn {
+  background: linear-gradient(90deg, #00c3ff, #9AEBA3);
   color: white;
-  padding: 10px 24px;
-  font-size: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 12px 24px;
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  font-weight: 600;
   transition: all 0.3s ease;
-}
-.hero-button:hover {
-  background: #4f46e5;
-  transform: translateY(-3px);
+  min-width: 140px;          
+  text-align: center;
 }
 
-/* ===== ABOUT ===== */
+.hero-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 12px rgba(123, 47, 247, 0.6);
+}
+
+/* Responsive: stack vertically on small screens */
+@media (max-width: 640px) {
+  .hero-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  .hero-btn {
+    width: 80%;              
+  }
+}
+
+/* ===== About Section ===== */
 .about-section {
-  background: white;
-  padding: 40px 20px;
-  border-radius: 16px;
-  max-width: 1200px;
-  margin: 20px auto;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(to right, #45C4B0, #9AEBA3);
+  padding: 40px 0;
+  width: 100%;
+  margin: 20px 0 0;
 }
 .about-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
   display: grid;
   grid-template-columns: 1fr;
   gap: 20px;
@@ -217,64 +345,102 @@ const goToRiskScore = () => router.push("/riskscore")
   }
 }
 .about-text h3 {
-  font-size: 2rem;
+  font-size: 2.6rem;
   font-weight: bold;
-  margin-bottom: 12px;
-}
-@media (min-width: 768px) {
-  .about-text h3 {
-    font-size: 2.8rem;
-  }
+  margin-bottom: 16px;
 }
 .about-text p {
-  font-size: 1rem;
-  line-height: 1.6;
+  font-size: 1.3rem;
+  line-height: 1.8;
 }
-@media (min-width: 768px) {
-  .about-text p {
-    font-size: 1.5rem;
-  }
-}
+
+/* About stats */
 .about-stats {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
 }
 .stat-card {
+  perspective: 1000px;
+  position: relative;
+  height: 200px;
   padding: 20px;
   border-radius: 12px;
   text-align: center;
   font-weight: bold;
   box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.stat-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
 }
 .stat-card h4 {
   font-size: 1.6rem;
   margin-bottom: 8px;
 }
-@media (min-width: 768px) {
-  .stat-card h4 {
-    font-size: 2.6rem;
-  }
+
+/* Stat card flipping */
+.stat-inner {
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+  width: 100%;
+  height: 100%;
+  position: relative;
 }
-.stat-card p {
-  font-size: 1rem;
+/* Hover flip (desktop) */
+.stat-card:hover .stat-inner {
+  transform: rotateY(180deg);
 }
-@media (min-width: 768px) {
-  .stat-card p {
-    font-size: 1.4rem;
-  }
+/* Click flip (mobile) */
+.stat-inner.flipped {
+  transform: rotateY(180deg);
 }
 
-/* ===== BOT ===== */
+.stat-front, .stat-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.stat-front {
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+.stat-back {
+  transform: rotateY(180deg);
+  background: #fff;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+/* White text with shadow */
+.stat-front h4,
+.stat-front p {
+  color: white !important;
+  font-weight: bold;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+  transition: all 0.3s ease;
+}
+
+/* ===== Bot Section ===== */
 .bot-section {
-  background: linear-gradient(to right, #6366f1, #3b82f6, #06b6d4);
-  padding: 40px 20px;
-  border-radius: 16px;
-  max-width: 1200px;
-  margin: 20px auto;
-  color: white;
+  background: linear-gradient(to right, #45C4B0, #9AEBA3);
+  padding: 40px 0;
+  width: 100%;
+  margin: 20px 0 0;
+  color: black;
 }
 .bot-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
   display: grid;
   grid-template-columns: 1fr;
   gap: 20px;
@@ -286,56 +452,57 @@ const goToRiskScore = () => router.push("/riskscore")
     gap: 40px;
   }
 }
-.bot-image img {
-  width: 120px;
-  height: auto;
-  margin: 0 auto;
+.chat-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 20px 0;
+  max-width: 420px;
 }
-@media (min-width: 768px) {
-  .bot-image img {
-    width: 180px;
-  }
-}
-.bot-text h3 {
-  font-size: 1.8rem;
-  margin-bottom: 12px;
-}
-@media (min-width: 768px) {
-  .bot-text h3 {
-    font-size: 2.8rem;
-  }
-}
-.bot-text p {
+.bubble {
+  padding: 12px 16px;
+  border-radius: 16px;
   font-size: 1rem;
+  line-height: 1.5;
+  max-width: 100%;
+  word-wrap: break-word;
+}
+/* User bubble */
+.bubble.user {
+  align-self: flex-start;
+  background-color: #40acdf;
+  color: #fff;
+  border-bottom-left-radius: 4px;
+}
+/* Bot bubble */
+.bubble.bot {
+  align-self: flex-end;
+  background-color: #a7f3d0;
+  color: #000;
+  border-bottom-right-radius: 4px;
+}
+.bot-info h3 {
+  font-size: 2.6rem;
+  font-weight: bold;
   margin-bottom: 16px;
 }
-@media (min-width: 768px) {
-  .bot-text p {
-    font-size: 1.5rem;
-  }
-}
-.bot-button {
-  background: #4f46e5;
-  color: white;
-  padding: 10px 24px;
-  font-size: 1rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-}
-.bot-button:hover {
-  background: #4338ca;
+.bot-info p {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  margin-bottom: 20px;
 }
 
-/* ===== RISK SCORE ===== */
+/* ===== Risk Score Section ===== */
 .risk-section {
-  background: #f3f4f6;
-  padding: 40px 20px;
-  border-radius: 16px;
-  max-width: 1200px;
-  margin: 20px auto;
+  background: linear-gradient(to right, #45C4B0, #9AEBA3);
+  padding: 40px 0;
+  width: 100%;
+  margin: 20px 0 0;
 }
 .risk-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
   display: grid;
   grid-template-columns: 1fr;
   gap: 20px;
@@ -347,52 +514,81 @@ const goToRiskScore = () => router.push("/riskscore")
     gap: 40px;
   }
 }
-.risk-image img {
-  width: 140px;
-  margin: 0 auto;
-}
-@media (min-width: 768px) {
-  .risk-image img {
-    width: 200px;
-  }
-}
 .risk-text h3 {
-  font-size: 1.8rem;
-  margin-bottom: 12px;
-}
-@media (min-width: 768px) {
-  .risk-text h3 {
-    font-size: 2.4rem;
-  }
+  font-size: 2.6rem;
+  font-weight: bold;
+  margin-bottom: 16px;
 }
 .risk-text p {
-  font-size: 1rem;
+  font-size: 1.2rem;
   line-height: 1.6;
   margin-bottom: 20px;
 }
-@media (min-width: 768px) {
-  .risk-text p {
-    font-size: 1.3rem;
-  }
+.risk-animation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto;
 }
+.risk-animation canvas,
+.risk-animation svg {
+  width: 100% !important;
+  height: auto !important;
+}
+.risk-visual {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ===== Buttons ===== */
+button,
+.explore-btn,
+.bot-button,
 .risk-button {
-  background: #facc15;
+  display: inline-block;
   padding: 10px 24px;
   font-size: 1rem;
-  border-radius: 8px;
-  font-weight: bold;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
   cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+.explore-btn {
+  background: #13678A;
+  color: white;
+}
+.explore-btn:hover {
+  background: #4f46e5;
+  transform: translateY(-3px);
+}
+.bot-button {
+  background: #13678A;
+  color: white;
+}
+.bot-button:hover {
+  background: #4f46e5;
+  transform: translateY(-3px);
+}
+.risk-button {
+  background: #13678A;
+  color: white;
 }
 .risk-button:hover {
   background: #eab308;
+  transform: translateY(-3px);
 }
 
-/* ===== 浮窗 ===== */
+/* ===== Floating ScamBot Button ===== */
 .scambot-floating {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background: #6d28d9;
+  background: #45C4B0;
   color: white;
   padding: 8px 12px;
   border-radius: 10px;
@@ -406,50 +602,27 @@ const goToRiskScore = () => router.push("/riskscore")
   width: 24px;
 }
 
-/* ===== UNIFIED BUTTON STYLE ===== */
-button,
-.explore-btn,
-.bot-button,
-.risk-button {
-  display: inline-block;
-  padding: 10px 24px;
-  font-size: 1rem;
-  font-weight: 600;
-  border: none;
-  border-radius: 10px;       /* rounded corners */
-  cursor: pointer;
-  transition: all 0.3s ease; /* smooth hover */
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+/* ===== Extra Components ===== */
+.explore-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
 }
-
-/* Explore Dashboard button */
-.explore-btn {
-  background: #6366f1;
-  color: white;
-}
-.explore-btn:hover {
-  background: #4f46e5;
-  transform: translateY(-3px);
-}
-
-/* ScamBot button */
-.bot-button {
-  background: #6366f1;   /* same as hero button for consistency */
-  color: white;
-}
-.bot-button:hover {
-  background: #4f46e5;
-  transform: translateY(-3px);
-}
-
-/* Risk Score button */
-.risk-button {
-  background: #facc15;
-  color: #111;
-}
-.risk-button:hover {
-  background: #eab308;
-  transform: translateY(-3px);
+/* Animated gradient background card */
+.card {
+  position: relative;
+  width: 100%;
+  min-height: 450px;
+  border-radius: 30px;
+  background: linear-gradient(45deg, #45c4b0, #5eead4, #4ade80);
+  background-size: 400% 400%;
+  animation: gradientMove 8s ease infinite;
+  transition: all 0.5s ease-in-out;
+  transform-style: preserve-3d;
+  box-shadow: rgba(5, 71, 17, 0) 40px 50px 25px -40px,
+              rgba(5, 71, 17, 0.2) 0px 25px 25px -5px;
+  padding: 40px;
+  box-sizing: border-box;
 }
 
 </style>
