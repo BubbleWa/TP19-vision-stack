@@ -30,7 +30,7 @@
     Click on the “?” icon to learn how the Risk Score works.
   </div>
   <!-- PC hover + Mobile click -->
-  <!-- PC 端 hover + Mobile 点击 -->
+  
   <div v-if="showImage" class="img-wrapper">
     <img src="/example.png" alt="Preview" class="hover-img" />
     <button class="close-btn" @click="showImage = false">✖</button>
